@@ -1,6 +1,6 @@
 const TAX_RATE = 0.125;
-const STANDARD_FEE = 3.00;
-const PRIORITY_FEE = 7.00;
+const STANDARD_FEE = 5.00;
+const PRIORITY_FEE = 10.00;
 
 export abstract class OrderDef {
     protected orderID!: number;
