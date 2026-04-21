@@ -1,3 +1,4 @@
+import db from "../DB/dbConnection";
 export abstract class UserDef {
     protected userID!: number;
     protected username!: string;
@@ -39,21 +40,21 @@ export class User extends UserDef {
     setContactNumber(contactNumber: string): void { this.contactNumber = contactNumber; }
 
     getDetails(): string {
+        return `[${this.getRole()}] ID: ${this.userID} | Name: ${this.username} | Email: ${this.email} | Contact: ${this.contactNumber}`;
     }
-
+ 
     static async getAll() {
-        
+        const result = await db.query("SELECT * FROM User ORDER BY userID ASC");
+        return result.rows;
     }
-
+ 
     static async getById(userID: number) {
-       
+        const result = await db.query("SELECT * FROM User WHERE userID = $1", [userID]);
+        return result.rows[0];
     }
-
-    static async add(username: string, email: string, contactNumber: string) {
-    
-    }
-
+ 
     static async delete(userID: number) {
-        
+        const result = await db.query("DELETE FROM User WHERE userID = $1 RETURNING userID", [userID]);
+        return result.rows[0];
     }
 }

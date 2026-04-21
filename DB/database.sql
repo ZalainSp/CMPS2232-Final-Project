@@ -161,3 +161,22 @@ CREATE TABLE CartItem (
     FOREIGN KEY (userID) REFERENCES Cart(userID),
     FOREIGN KEY (itemID) REFERENCES MenuItem(itemID)
 );
+
+/* Note: Updates to make for auth */
+
+/*Password Management (hashing and salting BCRYPT)*/
+ALTER TABLE User
+ADD COLUMN passwordHash VARCHAR(128) NOT NULL DEFAULT '',
+ADD COLUMN passwordSalt VARCHAR(64)  NOT NULL DEFAULT '';
+
+
+/*Session Management*/ 
+CREATE TABLE Session (
+    token     VARCHAR(64) PRIMARY KEY,
+    userID    INT,
+    role      VARCHAR(50),
+    expiresAt DATETIME,
+    FOREIGN KEY (userID) REFERENCES User(userID) ON DELETE CASCADE
+);
+
+

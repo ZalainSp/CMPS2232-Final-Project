@@ -1,3 +1,4 @@
+import db from "../DB/dbConnection";
 import { User } from "./User";
 
 export abstract class DriverDef extends User {
@@ -35,31 +36,102 @@ export class Driver extends DriverDef {
     setAvailability(available: boolean): void { this.available = available; }
     setVehicleType(vehicleType: string): void { this.vehicleType = vehicleType; }
 
-    static async getAll() {
-        
+   static async getAll() {
+        const query = `
+            SELECT u.userID, u.username, u.email, u.contactNumber, d.driverID, d.vehicleType, d.available
+            FROM User u
+            JOIN Driver d ON u.userID = d.userID
+            ORDER BY u.userID ASC;
+        `;
+        const result = await db.query(query);
+        return result.rows;
     }
-
+ 
     static async getById(userID: number) {
-       
+        const query = `
+            SELECT u.userID, u.username, u.email, u.contactNumber, d.driverID, d.vehicleType, d.available
+            FROM User u
+            JOIN Driver d ON u.userID = d.userID
+            WHERE u.userID = $1;
+        `;
+        const result = await db.query(query, [userID]);
+        return result.rows[0];
     }
-
+ 
     static async getAvailable() {
-        
+        const query = `
+            SELECT u.userID, u.username, u.email, u.contactNumber, d.driverID, d.vehicleType, d.available
+            FROM User u
+            JOIN Driver d ON u.userID = d.userID
+            WHERE d.available = TRUE;
+        `;
+        const result = await db.query(query);
+        return result.rows;
     }
-
+ 
     static async add(username: string, email: string, contactNumber: string, driverID: number, vehicleType: string) {
-        
+        const client = await db.connect();
+        try {
+            await client.query("BEGIN");
+ 
+            const userRes = await client.query(
+                "INSERT INTO User (username, email, contactNumber) VALUES ($1, $2, $3) RETURNING userID",
+                [username, email, contactNumber]
+            );
+            const userID = userRes.rows[0].userid;
+ 
+            await client.query(
+                "INSERT INTO Driver (userID, driverID, vehicleType, available) VALUES ($1, $2, $3, TRUE)",
+                [userID, driverID, vehicleType]
+            );
+ 
+            await client.query("COMMIT");
+            return { userID, username, email, contactNumber, driverID, vehicleType, available: true };
+        } catch (error) {
+            await client.query("ROLLBACK");
+            throw error;
+        } finally {
+            client.release();
+        }
     }
-
+ 
     static async setAvailability(userID: number, available: boolean) {
-        
+        const result = await db.query(
+            "UPDATE Driver SET available = $1 WHERE userID = $2 RETURNING userID, available",
+            [available, userID]
+        );
+        return result.rows[0];
     }
-
+ 
     static async acceptDelivery(userID: number, orderID: number) {
-        
+        const client = await db.connect();
+        try {
+            await client.query("BEGIN");
+ 
+            await client.query(
+                "UPDATE `Order` SET driverID = $1, status = 'Out for Delivery' WHERE orderID = $2",
+                [userID, orderID]
+            );
+            await client.query(
+                "UPDATE Driver SET available = FALSE WHERE userID = $1",
+                [userID]
+            );
+ 
+            await client.query("COMMIT");
+            return { success: true, message: "Delivery accepted" };
+        } catch (error: any) {
+            await client.query("ROLLBACK");
+            return { success: false, message: error.message };
+        } finally {
+            client.release();
+        }
     }
-
+ 
     static async updateDeliveryStatus(orderID: number, status: string) {
-        
+        const result = await db.query(
+            "UPDATE `Order` SET status = $1 WHERE orderID = $2 RETURNING orderID, status",
+            [status, orderID]
+        );
+        return result.rows[0];
     }
 }
