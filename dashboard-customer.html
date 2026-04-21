@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GoBites – Customer Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css"/>
+</head>
+<body>
+  <div class="dashboard">
+
+    <aside class="sidebar">
+      <div class="sidebar-brand"><span>GoBites</span></div>
+      <nav class="sidebar-nav">
+        <div class="nav-label">Menu</div>
+        <a href="dashboard-customer.html" style="text-decoration:none;"><div class="nav-item active">Home</div></a>
+        <a href="dashboard-customer.html" style="text-decoration:none;"><div class="nav-item">Browse Menu</div></a>
+        <a href="cart.html" style="text-decoration:none;"><div class="nav-item">My Cart</div></a>
+        <div class="nav-item">My Orders</div>
+        <div class="nav-label">Account</div>
+        <div class="nav-item">Profile</div>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="user-chip">
+          <div class="avatar" id="user-avatar"></div>
+          <div>
+            <span class="user-name" id="user-name">Username</span>
+            <span class="user-role">Customer</span>
+          </div>
+        </div>
+        <a href="login.html"><button class="btn-icon">Out</button></a>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="topbar-title">Home</div>
+        <button class="btn-icon">Notifications <span class="badge" id="notif-count"></span></button>
+      </header>
+
+      <div class="page">
+
+        <div class="welcome-banner">
+          <div>
+            <h2 class="welcome-title">Good day, <span id="greeting-name">there</span></h2>
+            <p class="welcome-sub">What are you craving today?</p>
+          </div>
+          <div class="active-pill" id="active-order-pill">
+            <span class="pulse-dot"></span> Active order
+          </div>
+        </div>
+
+        <!-- Search (browseMenu) -->
+        <div class="search-wrap">
+          <input type="text" id="menu-search" name="search" placeholder="Search menu items..."/>
+        </div>
+
+        <!-- Category filter chips -->
+        <div class="chips">
+          <button class="chip active" data-filter="all">All</button>
+          <button class="chip" data-filter="food">Food</button>
+          <button class="chip" data-filter="drink">Drinks</button>
+          <button class="chip" data-filter="combo">Combos</button>
+          <button class="chip" data-filter="seasonal">Seasonal</button>
+        </div>
+
+        <!-- Menu grid — backend renders MenuItem cards here -->
+        <div class="section-header">
+          <h3>Featured Items</h3>
+          <a href="#" class="link-accent">View All</a>
+        </div>
+
+        <div class="menu-grid" id="menu-grid">
+          <!-- MenuItem cards injected by backend -->
+          <!-- Each card structure:
+          <div class="menu-card" data-item-id="">
+            <div class="menu-card-img">Item Name</div>
+            <div class="menu-card-body">
+              <div class="menu-card-name">itemName</div>
+              <div class="menu-card-meta">
+                <span class="price">$basePrice</span>
+                <span class="tag">category</span>
+                <button class="add-btn" data-item-id="">+</button>
+              </div>
+            </div>
+          </div>
+          -->
+        </div>
+
+        <!-- Order status tracker (trackOrderStatus) -->
+        <div class="section-header" style="margin-top:2rem;">
+          <h3>Active Order</h3>
+          <a href="#" class="link-accent">View All Orders</a>
+        </div>
+        <div class="order-tracker" id="order-tracker">
+          <div class="tracker-steps">
+            <div class="tracker-step active">
+              <div class="tracker-dot"></div>
+              <div class="tracker-label">Pending</div>
+            </div>
+            <div class="tracker-line"></div>
+            <div class="tracker-step">
+              <div class="tracker-dot"></div>
+              <div class="tracker-label">Preparing</div>
+            </div>
+            <div class="tracker-line"></div>
+            <div class="tracker-step">
+              <div class="tracker-dot"></div>
+              <div class="tracker-label">Ready</div>
+            </div>
+            <div class="tracker-line"></div>
+            <div class="tracker-step">
+              <div class="tracker-dot"></div>
+              <div class="tracker-label">Delivered</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+</body>
+</html>

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GoBites – Driver Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css"/>
+</head>
+<body>
+  <div class="dashboard">
+
+    <aside class="sidebar">
+      <div class="sidebar-brand"><span>GoBites</span></div>
+      <nav class="sidebar-nav">
+        <div class="nav-label">Deliveries</div>
+        <div class="nav-item active">Home</div>
+        <div class="nav-item">My Deliveries</div>
+        <div class="nav-label">Account</div>
+        <div class="nav-item">Profile</div>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="user-chip">
+          <div class="avatar" id="user-avatar"></div>
+          <div>
+            <span class="user-name" id="user-name">Username</span>
+            <span class="user-role">Driver</span>
+          </div>
+        </div>
+        <a href="login.html"><button class="btn-icon">Out</button></a>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="topbar-title">Driver Dashboard</div>
+        <button class="btn-icon">Notifications <span class="badge" id="notif-count"></span></button>
+      </header>
+
+      <div class="page">
+
+        <div class="welcome-banner">
+          <div>
+            <h2 class="welcome-title">Driver Dashboard</h2>
+            <p class="welcome-sub" id="vehicle-info">Vehicle Type</p>
+          </div>
+          <!-- Driver.setAvailability() -->
+          <div class="avail-wrap">
+            <span>Available</span>
+            <label class="switch">
+              <input type="checkbox" id="avail-toggle" name="availability">
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-val" id="stat-deliveries">--</div>
+            <div class="stat-label">Deliveries Today</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val" id="stat-rating">--</div>
+            <div class="stat-label">Rating</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val" id="stat-earned">--</div>
+            <div class="stat-label">Earned Today</div>
+          </div>
+        </div>
+
+        <!-- Pending Deliveries (acceptDelivery / updateDeliveryStatus) -->
+        <div class="section-header"><h3>Pending Deliveries</h3></div>
+        <div id="delivery-cards">
+          <!--
+          Backend renders delivery cards here per Order assigned to driver.
+          Structure per card:
+          <div class="delivery-card">
+            <div class="delivery-card-header">
+              <span class="delivery-id">#orderID</span>
+              <span class="status status-ready">Ready for Pickup</span>
+            </div>
+            <div class="delivery-addr">deliveryAddress</div>
+            <div class="delivery-meta">restaurantName | item1, item2</div>
+            <div class="delivery-actions">
+              <button class="btn btn-primary btn-sm" data-order-id="">Accept — $fee</button>
+              <button class="btn btn-ghost btn-sm" data-order-id="">Decline</button>
+            </div>
+          </div>
+          -->
+        </div>
+
+        <!-- Active Delivery Status Update (updateDeliveryStatus) -->
+        <div class="section-header" style="margin-top:2rem;"><h3>Update Active Delivery</h3></div>
+        <div class="delivery-status-form" id="status-update-form">
+          <div class="field">
+            <label for="active-order-id">Order ID</label>
+            <input type="text" id="active-order-id" name="orderID" placeholder="e.g. #1042" readonly/>
+          </div>
+          <div class="field">
+            <label for="delivery-status">Update Status</label>
+            <select id="delivery-status" name="status">
+              <option value="">Select status...</option>
+              <option value="picked_up">Picked Up</option>
+              <option value="on_the_way">On the Way</option>
+              <option value="delivered">Delivered</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:auto;padding:.7rem 1.8rem;margin-top:.5rem;">Update Status</button>
+        </div>
+
+      </div>
+    </main>
+  </div>
+</body>
+</html>

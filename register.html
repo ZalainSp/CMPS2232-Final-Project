@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GoBites – Register</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css"/>
+</head>
+<body>
+  <div class="split">
+    <div class="split-left">
+      <div class="brand">
+        <h1>GoBites</h1>
+        <p>Join the community</p>
+        <div class="brand-line"></div>
+      </div>
+    </div>
+    <div class="split-right">
+      <div class="card">
+        <h2>Create Account</h2>
+        <p class="sub">Fill in your details to get started</p>
+
+        <div class="role-tabs">
+          <button class="role-tab active">Customer</button>
+          <button class="role-tab">Manager</button>
+          <button class="role-tab">Driver</button>
+        </div>
+
+        <div class="form">
+          <div class="field-row">
+            <div class="field">
+              <label for="reg-username">Username</label>
+              <input type="text" id="reg-username" name="username" placeholder="your_username"/>
+            </div>
+            <div class="field">
+              <label for="reg-email">Email</label>
+              <input type="email" id="reg-email" name="email" placeholder="you@email.com"/>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="reg-contact">Contact Number</label>
+            <input type="tel" id="reg-contact" name="contactNumber" placeholder="+501 XXX-XXXX"/>
+          </div>
+
+          <!-- Customer Fields -->
+          <div class="field" id="field-address">
+            <label for="reg-address">Delivery Address</label>
+            <input type="text" id="reg-address" name="deliveryAddress" placeholder="123 Main St, Belize City"/>
+          </div>
+
+          <!-- Manager Fields (hidden until role selected) -->
+          <div id="field-manager" style="display:none;">
+            <div class="field-row">
+              <div class="field">
+                <label for="reg-restaurant">Restaurant Name</label>
+                <input type="text" id="reg-restaurant" name="restaurantName" placeholder="My Restaurant"/>
+              </div>
+              <div class="field">
+                <label for="reg-hours">Opening Hours</label>
+                <input type="text" id="reg-hours" name="openingHours" placeholder="8am – 10pm"/>
+              </div>
+            </div>
+          </div>
+
+          <!-- Driver Fields (hidden until role selected) -->
+          <div id="field-driver" style="display:none;">
+            <div class="field">
+              <label for="reg-vehicle">Vehicle Type</label>
+              <select id="reg-vehicle" name="vehicleType">
+                <option value="">Select vehicle...</option>
+                <option value="bicycle">Bicycle</option>
+                <option value="motorcycle">Motorcycle</option>
+                <option value="car">Car</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="reg-password">Password</label>
+              <div class="input-wrap">
+                <input type="password" id="reg-password" name="password" placeholder="••••••••"/>
+                <button type="button" class="show-btn">Show</button>
+              </div>
+            </div>
+            <div class="field">
+              <label for="reg-confirm">Confirm Password</label>
+              <div class="input-wrap">
+                <input type="password" id="reg-confirm" name="confirmPassword" placeholder="••••••••"/>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary">Create Account</button>
+        </div>
+
+        <p class="form-footer">
+          Already have an account? <a href="login.html" class="link-accent">Sign in</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
