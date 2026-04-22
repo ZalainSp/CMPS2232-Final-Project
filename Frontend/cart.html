@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GoBites – Cart</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css"/>
+</head>
+<body>
+  <div class="dashboard">
+
+    <aside class="sidebar">
+      <div class="sidebar-brand"><span>GoBites</span></div>
+      <nav class="sidebar-nav">
+        <div class="nav-label">Menu</div>
+        <a href="dashboard-customer.html" style="text-decoration:none;"><div class="nav-item">Home</div></a>
+        <a href="dashboard-customer.html" style="text-decoration:none;"><div class="nav-item">Browse Menu</div></a>
+        <a href="cart.html" style="text-decoration:none;"><div class="nav-item active">My Cart</div></a>
+        <div class="nav-item">My Orders</div>
+        <div class="nav-label">Account</div>
+        <div class="nav-item">Profile</div>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="users-chip">
+          <div class="avatar" id="users-avatar"></div>
+          <div>
+            <span class="users-name" id="users-name">Username</span>
+            <span class="users-role">Customer</span>
+          </div>
+        </div>
+        <a href="login.html"><button class="btn-icon">Out</button></a>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="topbar-title">My Cart</div>
+        <button class="btn-icon">Notifications <span class="badge" id="notif-count"></span></button>
+      </header>
+
+      <div class="page">
+
+        <div class="welcome-banner">
+          <div>
+            <h2 class="welcome-title">Your Cart</h2>
+            <p class="welcome-sub">Review your items before checking out</p>
+          </div>
+          <a href="dashboard-customer.html">
+            <button class="btn btn-ghost" style="padding:.5rem 1.2rem;font-size:.9rem;">+ Add More Items</button>
+          </a>
+        </div>
+
+        <div class="cart-page-grid">
+
+          <!-- LEFT: Cart Items (CartItem table) -->
+          <div>
+            <div class="section-header">
+              <h3>Cart Items</h3>
+              <span style="font-size:.85rem;color:var(--gray);" id="cart-item-count"></span>
+            </div>
+
+            <div class="cart-table-wrap">
+              <table class="cart-table">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Type</th>
+                    <th>Unit Price</th>
+                    <th>Qty</th>
+                    <th>Subtotal</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="cart-table-body">
+                  <!--
+                  Backend renders rows here per CartItem.
+                  FoodItem row example:
+                  <tr>
+                    <td>
+                      <div class="item-name-cell">itemName</div>
+                      <div class="item-sub">Portion: portionSize</div>
+                    </td>
+                    <td><span class="item-type-badge">Food</span></td>
+                    <td class="item-price">$basePrice</td>
+                    <td>
+                      <div class="qty-control">
+                        <button class="qty-btn" data-action="decrease" data-id="">-</button>
+                        <span class="qty-val">qty</span>
+                        <button class="qty-btn" data-action="increase" data-id="">+</button>
+                      </div>
+                    </td>
+                    <td class="item-price">$lineTotal</td>
+                    <td><button class="remove-x" data-id="">Remove</button></td>
+                  </tr>
+
+                  DrinkItem row example:
+                  <tr>
+                    <td>
+                      <div class="item-name-cell">itemName</div>
+                      <div class="item-sub">Cup Size: cupSize</div>
+                    </td>
+                    <td><span class="item-type-badge">Drink</span></td>
+                    <td class="item-price">$basePrice</td>
+                    <td>...</td>
+                    <td class="item-price">$lineTotal</td>
+                    <td><button class="remove-x" data-id="">Remove</button></td>
+                  </tr>
+
+                  ComboMeal row example (with includedItems breakdown):
+                  <tr>
+                    <td colspan="6">
+                      <div class="combo-row-wrap">
+                        <div class="combo-row-header">
+                          <span class="item-name-cell">comboName</span>
+                          <span class="item-type-badge">Combo</span>
+                          <span class="item-price">$comboPrice</span>
+                          <div class="qty-control">...</div>
+                          <span class="item-price">$lineTotal</span>
+                          <button class="remove-x" data-id="">Remove</button>
+                        </div>
+                        <div class="combo-breakdown">
+                          <div class="combo-breakdown-title">Included Items</div>
+                          <div class="combo-item-row">
+                            <span>itemName (portionSize/cupSize)</span>
+                            <span>$price</span>
+                          </div>
+                          ...more items...
+                          <div class="combo-savings">
+                            <span>You Save (calculateSavings)</span>
+                            <span>-$discountAmount</span>
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                  -->
+                </tbody>
+              </table>
+
+              <!-- Empty cart state -->
+              <div class="cart-empty" id="cart-empty-state">
+                <h3>Your cart is empty</h3>
+                <p>Browse the menu and add items to get started</p>
+                <a href="dashboard-customer.html">
+                  <button class="btn btn-primary" style="margin-top:1rem;width:auto;padding:.7rem 1.8rem;">Browse Menu</button>
+                </a>
+              </div>
+
+            </div>
+
+            <div class="cart-actions">
+              <button class="btn btn-ghost" id="clear-cart-btn">Clear Cart</button>
+              <a href="dashboard-customer.html">
+                <button class="btn btn-ghost">Continue Shopping</button>
+              </a>
+            </div>
+          </div>
+
+          <!-- RIGHT: Orders Summary -->
+          <div class="summary-panel">
+            <h3>Orders Summary</h3>
+
+            <!-- Customer.deliveryAddress -->
+            <div class="address-box">
+              <div class="address-box-label">Delivery Address</div>
+              <div class="address-box-value" id="delivery-address"></div>
+              <button class="address-change">Change address</button>
+            </div>
+
+            <!-- Orders.deliveryType -->
+            <div class="delivery-section">
+              <label>Delivery Type</label>
+              <div class="delivery-options">
+                <div class="delivery-option selected" data-type="standard">
+                  <div class="d-type">Standard</div>
+                  <div class="d-price">$5.00</div>
+                </div>
+                <div class="delivery-option" data-type="priority">
+                  <div class="d-type">Priority</div>
+                  <div class="d-price">$10.00</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- PromoCode -->
+            <div>
+              <div style="font-size:.83rem;font-weight:500;color:var(--mid);margin-bottom:.4rem;">Promo Code</div>
+              <div class="promo-row">
+                <input type="text" id="promo-input" name="promoCode" placeholder="Enter code e.g. GOBITES10"/>
+                <button class="btn btn-ghost" style="padding:.5rem 1rem;font-size:.85rem;">Apply</button>
+              </div>
+              <!-- Backend renders this when promo is valid -->
+              <div class="promo-applied" id="promo-applied-msg" style="display:none;">
+                <span id="promo-label"></span>
+                <button id="remove-promo">Remove</button>
+              </div>
+            </div>
+
+            <div class="summary-divider"></div>
+
+            <!-- Orders calculation methods -->
+            <div class="summary-line">
+              <span>Subtotal</span>
+              <span id="summary-subtotal">$0.00</span>
+            </div>
+            <div class="summary-line discount" id="discount-row" style="display:none;">
+              <span>Promo Discount</span>
+              <span id="summary-discount"></span>
+            </div>
+            <div class="summary-line">
+              <span>GST (12.5%)</span>
+              <span id="summary-tax">$0.00</span>
+            </div>
+            <div class="summary-line">
+              <span>Delivery Fee</span>
+              <span id="summary-delivery">$5.00</span>
+            </div>
+
+            <div class="summary-divider"></div>
+
+            <div class="summary-line total">
+              <span>Total</span>
+              <span id="summary-total">$0.00</span>
+            </div>
+
+            <button class="btn btn-primary" id="checkout-btn" style="margin-top:1.2rem;">
+              Proceed to Checkout
+            </button>
+
+            <a href="dashboard-customer.html" style="display:block;text-align:center;margin-top:.8rem;font-size:.85rem;color:var(--gray);text-decoration:underline;">
+              Back to Menu
+            </a>
+          </div>
+
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

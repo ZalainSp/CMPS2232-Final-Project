@@ -2,7 +2,7 @@ const TAX_RATE = 0.125;
 const STANDARD_FEE = 5.00;
 const PRIORITY_FEE = 10.00;
 
-export abstract class OrderDef {
+export abstract class OrdersDef {
     protected orderID!: number;
     protected orderDate!: string;
     protected deliveryType!: string;
@@ -21,7 +21,7 @@ export abstract class OrderDef {
     abstract setDriverID(driverID: number): void;
 }
 
-export class Order extends OrderDef {
+export class Orders extends OrdersDef {
     constructor(
         orderID: number,
         orderDate: string,
@@ -65,7 +65,7 @@ export class Order extends OrderDef {
       
     }
 
-    static async placeOrder(userID: number, deliveryType: string, promoCode: string | null = null) {
+    static async placeOrders(userID: number, deliveryType: string, promoCode: string | null = null) {
         
         
     }

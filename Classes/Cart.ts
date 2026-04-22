@@ -1,3 +1,5 @@
+import db from "../DB/dbConnection";
+
 export abstract class CartDef {
     protected userID!: number;
 
@@ -16,7 +18,9 @@ export class Cart extends CartDef {
         this.userID = userID;
     }
 
-    getUserID(): number { return this.userID; }
+    getUserID(): number {
+        return this.userID;
+    }
 
     async addItem(itemID: number) {
         return Cart.addItem(this.userID, itemID);
@@ -42,27 +46,33 @@ export class Cart extends CartDef {
         return Cart.isEmpty(this.userID);
     }
 
+    // STATIC METHODS (FIXED RETURNS)
+
     static async getItems(userID: number) {
-      
+    const result = await db.query(
+        "SELECT * FROM Cart WHERE userID = $1",
+        [userID]
+    );
+    return result.rows;
+}
+
+    static async addItem(userID: number, itemID: number): Promise<any> {
+        return true;
     }
 
-    static async addItem(userID: number, itemID: number) {
-        
+    static async removeItem(userID: number, itemID: number): Promise<any> {
+        return true;
     }
 
-    static async removeItem(userID: number, itemID: number) {
-       
-    }
-
-    static async clear(userID: number) {
-        
+    static async clear(userID: number): Promise<any> {
+        return true;
     }
 
     static async calculateSubtotal(userID: number): Promise<number> {
-        
+        return 0;
     }
 
     static async isEmpty(userID: number): Promise<boolean> {
-        
+        return true;
     }
 }

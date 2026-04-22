@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GoBites – Admin Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css"/>
+</head>
+<body>
+  <div class="dashboard">
+
+    <aside class="sidebar">
+      <div class="sidebar-brand"><span>GoBites</span></div>
+      <nav class="sidebar-nav">
+        <div class="nav-label">System</div>
+        <div class="nav-item active" data-section="home">Home</div>
+        <div class="nav-item" data-section="users">Users Management</div>
+        <div class="nav-item" data-section="reports">Reports</div>
+        <div class="nav-item" data-section="settings">Settings</div>
+        <div class="nav-label">Account</div>
+        <div class="nav-item" data-section="profile">Profile</div>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="users-chip">
+          <div class="avatar" id="users-avatar"></div>
+          <div>
+            <span class="users-name" id="users-name">Username</span>
+            <span class="users-role">System Admin</span>
+          </div>
+        </div>
+      <button class="btn-icon" id="logout-btn">Out</button>
+    </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="topbar-title">System Admin</div>
+        <button class="btn-notif">Notifications <span class="badge" id="notif-count"></span></button>
+      </header>
+
+      <div class="page">
+
+        <!-- HOME SECTION -->
+        <div id="home-section" class="page-section">
+
+        <div class="welcome-banner">
+          <div>
+            <h2 class="welcome-title">System Admin</h2>
+            <p class="welcome-sub">Oversee all platform activity</p>
+          </div>
+          <!-- Admin.generateOrdersReport() -->
+          <button class="btn btn-danger" id="gen-report-btn">Generate Report</button>
+        </div>
+
+        <!-- System Stats -->
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-val" id="stat-users">--</div>
+            <div class="stat-label">Total Users</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val" id="stat-restaurants">--</div>
+            <div class="stat-label">Restaurants</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val" id="stat-orders">--</div>
+            <div class="stat-label">Total Orders</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val" id="stat-revenue">--</div>
+            <div class="stat-label">Total Revenue</div>
+          </div>
+        </div>
+
+        <!-- Users Management (Admin.removeUsers) -->
+        <div class="section-header"><h3>Users Management</h3></div>
+        <div class="users-table-wrap">
+          <table class="data-table" id="users-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Username</th>
+                <th>Role</th>
+                <th>Email</th>
+                <th>Contact</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="users-table-body">
+              <!--
+              Backend renders rows here per Users object.
+              Structure per row:
+              <tr>
+                <td>#userID</td>
+                <td><strong>username</strong></td>
+                <td><span class="tag">role</span></td>
+                <td>email</td>
+                <td>contactNumber</td>
+                <td><span class="status status-[ready|pending]">Active|Suspended</span></td>
+                <td>
+                  <button class="btn btn-danger btn-sm" data-users-id="">Remove</button>
+                </td>
+              </tr>
+              -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Orders Report (generateOrdersReport) -->
+        <div class="section-header" style="margin-top:2rem;"><h3>Orders Report</h3></div>
+        <div class="report-panel" id="report-panel">
+          <div class="field-row" style="margin-bottom:1rem;">
+            <div class="field">
+              <label for="report-from">From Date</label>
+              <input type="date" id="report-from" name="fromDate"/>
+            </div>
+            <div class="field">
+              <label for="report-to">To Date</label>
+              <input type="date" id="report-to" name="toDate"/>
+            </div>
+          </div>
+          <button class="btn btn-primary" style="width:auto;padding:.7rem 1.8rem;">Generate</button>
+
+          <!-- Report output — backend populates -->
+          <div class="report-output" id="report-output" style="margin-top:1.5rem;display:none;">
+            <div class="summary-line"><span>Total Orders</span><span id="rpt-orders">--</span></div>
+            <div class="summary-line"><span>Total Sales</span><span id="rpt-sales">--</span></div>
+            <div class="summary-line"><span>Average Orders Value</span><span id="rpt-avg">--</span></div>
+            <div class="summary-line total"><span>Total Revenue</span><span id="rpt-revenue">--</span></div>
+          </div>
+        </div>
+
+        </div>
+
+        <!-- PROFILE SECTION -->
+        <div id="profile-section" class="page-section">
+          <div class="welcome-banner">
+            <div>
+              <h2 class="welcome-title">My Profile</h2>
+              <p class="welcome-sub">Manage your account settings</p>
+            </div>
+          </div>
+
+          <div class="profile-card">
+            <div class="profile-header">
+              <div class="profile-avatar" id="profile-avatar-lg">A</div>
+              <div class="profile-info">
+                <h3 id="profile-username">Username</h3>
+                <p id="profile-role">System Admin</p>
+              </div>
+            </div>
+
+            <div class="profile-section-title">Account Details</div>
+            <div class="profile-details">
+              <div class="detail-row">
+                <span class="detail-label">Email</span>
+                <span class="detail-value" id="profile-email">--</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Contact Number</span>
+                <span class="detail-value" id="profile-contact">--</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">User ID</span>
+                <span class="detail-value" id="profile-id">--</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Role</span>
+                <span class="detail-value" id="profile-role-detail">System Admin</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Member Since</span>
+                <span class="detail-value" id="profile-joined">--</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+  <script src="js/auth-guard.js"></script>
+  <script src="js/admin-profile.js"></script>
+  <script src="js/admin-dashboard.js"></script>
+  <script src="js/logout.js"></script>
+</body>
+</html>

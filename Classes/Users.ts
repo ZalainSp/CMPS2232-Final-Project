@@ -1,5 +1,5 @@
 import db from "../DB/dbConnection";
-export abstract class UserDef {
+export abstract class UsersDef {
     protected userID!: number;
     protected username!: string;
     protected email!: string;
@@ -16,7 +16,7 @@ export abstract class UserDef {
     abstract setContactNumber(contactNumber: string): void;
 }
 
-export class User extends UserDef {
+export class Users extends UsersDef {
     constructor(
         userID: number,
         username: string,
@@ -30,31 +30,50 @@ export class User extends UserDef {
         this.contactNumber = contactNumber;
     }
 
-    getRole(): string { return "User"; }
-    getUserID(): number { return this.userID; }
-    getUsername(): string { return this.username; }
-    getEmail(): string { return this.email; }
-    getContactNumber(): string { return this.contactNumber; }
+    getRole(): string {
+        return "Users";
+    }
 
-    setEmail(email: string): void { this.email = email; }
-    setContactNumber(contactNumber: string): void { this.contactNumber = contactNumber; }
+    getUserID(): number {
+        return this.userID;
+    }
+
+    getUsername(): string {
+        return this.username;
+    }
+
+    getEmail(): string {
+        return this.email;
+    }
+
+    getContactNumber(): string {
+        return this.contactNumber;
+    }
+
+    setEmail(email: string): void {
+        this.email = email;
+    }
+
+    setContactNumber(contactNumber: string): void {
+        this.contactNumber = contactNumber;
+    }
 
     getDetails(): string {
         return `[${this.getRole()}] ID: ${this.userID} | Name: ${this.username} | Email: ${this.email} | Contact: ${this.contactNumber}`;
     }
- 
+
     static async getAll() {
-        const result = await db.query("SELECT * FROM User ORDER BY userID ASC");
+        const result = await db.query("SELECT * FROM Users ORDER BY userID ASC");
         return result.rows;
     }
- 
+
     static async getById(userID: number) {
-        const result = await db.query("SELECT * FROM User WHERE userID = $1", [userID]);
+        const result = await db.query("SELECT * FROM Users WHERE userID = $1", [userID]);
         return result.rows[0];
     }
- 
+
     static async delete(userID: number) {
-        const result = await db.query("DELETE FROM User WHERE userID = $1 RETURNING userID", [userID]);
+        const result = await db.query("DELETE FROM Users WHERE userID = $1 RETURNING userID", [userID]);
         return result.rows[0];
     }
 }

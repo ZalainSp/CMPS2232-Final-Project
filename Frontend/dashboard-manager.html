@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GoBites – Manager Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css"/>
+</head>
+<body>
+  <div class="dashboard">
+
+    <aside class="sidebar">
+      <div class="sidebar-brand"><span>GoBites</span></div>
+      <nav class="sidebar-nav">
+        <div class="nav-label">Management</div>
+        <div class="nav-item active">Home</div>
+        <div class="nav-item">Orders Queue</div>
+        <div class="nav-item">Menu Management</div>
+        <div class="nav-item">Revenue</div>
+        <div class="nav-label">Account</div>
+        <div class="nav-item">Profile</div>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="users-chip">
+          <div class="avatar" id="users-avatar"></div>
+          <div>
+            <span class="users-name" id="users-name">Username</span>
+            <span class="users-role">Manager</span>
+          </div>
+        </div>
+        <a href="login.html"><button class="btn-icon">Out</button></a>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="topbar-title">Manager Dashboard</div>
+        <button class="btn-icon">Notifications <span class="badge" id="notif-count"></span></button>
+      </header>
+
+      <div class="page">
+
+        <div class="welcome-banner">
+          <div>
+            <h2 class="welcome-title">Manager Dashboard</h2>
+            <p class="welcome-sub" id="restaurant-info">Restaurant Name — Opening Hours</p>
+          </div>
+          <button class="btn btn-accent" id="add-item-btn">+ Add Menu Item</button>
+        </div>
+
+        <!-- Stats (backend populates values) -->
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-val" id="stat-active-orders">--</div>
+            <div class="stat-label">Active Orders</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val" id="stat-completed">--</div>
+            <div class="stat-label">Completed Today</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val" id="stat-revenue">--</div>
+            <div class="stat-label">Today's Revenue</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val" id="stat-menu-items">--</div>
+            <div class="stat-label">Menu Items</div>
+          </div>
+        </div>
+
+        <div class="two-col">
+
+          <!-- Orders Queue (manageOrdersQueue) -->
+          <div>
+            <div class="section-header"><h3>Orders Queue</h3></div>
+            <div id="orders-queue">
+              <!--
+              Backend renders orders cards here per Orders object.
+              Structure per card:
+              <div class="orders-card">
+                <div class="orders-id">#orderID</div>
+                <div class="orders-info">
+                  <div class="orders-customer">customerName</div>
+                  <div class="orders-items">item1, item2...</div>
+                </div>
+                <span class="status status-[pending|preparing|ready|delivered]">status</span>
+              </div>
+              -->
+            </div>
+          </div>
+
+          <!-- Menu Items (manageMenu) -->
+          <div>
+            <div class="section-header"><h3>Menu Items</h3></div>
+            <div id="menu-list">
+              <!--
+              Backend renders menu rows here per MenuItem.
+              Structure per row:
+              <div class="menu-row">
+                <span class="menu-row-name">itemName</span>
+                <span class="menu-row-price">$basePrice</span>
+                <div class="dot [dot-on|dot-off]"></div>
+              </div>
+              -->
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Add Menu Item Form (hidden, shown on button click) -->
+        <div class="form-section" id="add-item-form" style="display:none;">
+          <div class="section-header"><h3>Add New Menu Item</h3></div>
+          <div class="form-card-inline">
+            <div class="field-row">
+              <div class="field">
+                <label for="item-name">Item Name</label>
+                <input type="text" id="item-name" name="itemName" placeholder="e.g. Fry Jacks"/>
+              </div>
+              <div class="field">
+                <label for="item-price">Base Price ($)</label>
+                <input type="number" id="item-price" name="basePrice" placeholder="0.00" min="0" step="0.01"/>
+              </div>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label for="item-type">Item Type</label>
+                <select id="item-type" name="itemType">
+                  <option value="">Select type...</option>
+                  <option value="food">Food Item</option>
+                  <option value="drink">Drink Item</option>
+                  <option value="combo">Combo Meal</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="item-category">Category</label>
+                <select id="item-category" name="category">
+                  <option value="regular">Regular</option>
+                  <option value="seasonal">Seasonal</option>
+                </select>
+              </div>
+            </div>
+            <!-- FoodItem field -->
+            <div class="field" id="portion-field">
+              <label for="portion-size">Portion Size</label>
+              <select id="portion-size" name="portionSize">
+                <option value="small">Small</option>
+                <option value="medium">Medium</option>
+                <option value="large">Large</option>
+              </select>
+            </div>
+            <!-- DrinkItem field -->
+            <div class="field" id="cup-field" style="display:none;">
+              <label for="cup-size">Cup Size</label>
+              <select id="cup-size" name="cupSize">
+                <option value="small">Small</option>
+                <option value="medium">Medium</option>
+                <option value="large">Large</option>
+              </select>
+            </div>
+            <!-- ComboMeal field -->
+            <div class="field" id="discount-field" style="display:none;">
+              <label for="discount-amount">Discount Amount ($)</label>
+              <input type="number" id="discount-amount" name="discountAmount" placeholder="0.00" min="0" step="0.01"/>
+            </div>
+            <div class="field">
+              <label for="item-available">Available</label>
+              <select id="item-available" name="isAvailable">
+                <option value="true">Yes</option>
+                <option value="false">No</option>
+              </select>
+            </div>
+            <div style="display:flex;gap:.8rem;margin-top:.5rem;">
+              <button type="submit" class="btn btn-primary" style="width:auto;padding:.7rem 1.8rem;">Save Item</button>
+              <button type="button" class="btn btn-ghost" id="cancel-add-btn" style="width:auto;padding:.7rem 1.8rem;">Cancel</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+</body>
+</html>
