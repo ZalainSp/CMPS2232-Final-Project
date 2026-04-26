@@ -15,11 +15,21 @@ class Customer extends CustomerDef {
         this.deliveryAddress = deliveryAddress;
         this.userStatus = userStatus;
     }
-    getRole() { return "Customer"; }
-    getDeliveryAddress() { return this.deliveryAddress; }
-    getUserStatus() { return this.userStatus; }
-    setDeliveryAddress(address) { this.deliveryAddress = address; }
-    setUserStatus(status) { this.userStatus = status; }
+    getRole() {
+        return "Customer";
+    }
+    getDeliveryAddress() {
+        return this.deliveryAddress;
+    }
+    getUserStatus() {
+        return this.userStatus;
+    }
+    setDeliveryAddress(address) {
+        this.deliveryAddress = address;
+    }
+    setUserStatus(status) {
+        this.userStatus = status;
+    }
     static async getAll() {
         const query = `
             SELECT u.userID, u.username, u.email, u.contactNumber, c.deliveryAddress, c.userStatus
@@ -49,7 +59,14 @@ class Customer extends CustomerDef {
             await client.query("INSERT INTO Customer (userID, deliveryAddress, userStatus) VALUES ($1, $2, $3)", [userID, deliveryAddress, userStatus]);
             await client.query("INSERT INTO Cart (userID) VALUES ($1)", [userID]);
             await client.query("COMMIT");
-            return { userID, username, email, contactNumber, deliveryAddress, userStatus };
+            return {
+                userID,
+                username,
+                email,
+                contactNumber,
+                deliveryAddress,
+                userStatus,
+            };
         }
         catch (error) {
             await client.query("ROLLBACK");

@@ -16,13 +16,27 @@ class Users extends UsersDef {
         this.email = email;
         this.contactNumber = contactNumber;
     }
-    getRole() { return "Users"; }
-    getUserID() { return this.userID; }
-    getUsername() { return this.username; }
-    getEmail() { return this.email; }
-    getContactNumber() { return this.contactNumber; }
-    setEmail(email) { this.email = email; }
-    setContactNumber(contactNumber) { this.contactNumber = contactNumber; }
+    getRole() {
+        return "Users";
+    }
+    getUserID() {
+        return this.userID;
+    }
+    getUsername() {
+        return this.username;
+    }
+    getEmail() {
+        return this.email;
+    }
+    getContactNumber() {
+        return this.contactNumber;
+    }
+    setEmail(email) {
+        this.email = email;
+    }
+    setContactNumber(contactNumber) {
+        this.contactNumber = contactNumber;
+    }
     getDetails() {
         return `[${this.getRole()}] ID: ${this.userID} | Name: ${this.username} | Email: ${this.email} | Contact: ${this.contactNumber}`;
     }
@@ -31,7 +45,9 @@ class Users extends UsersDef {
         return result.rows;
     }
     static async getById(userID) {
-        const result = await dbConnection_1.default.query("SELECT * FROM Users WHERE userID = $1", [userID]);
+        const result = await dbConnection_1.default.query("SELECT * FROM Users WHERE userID = $1", [
+            userID,
+        ]);
         return result.rows[0];
     }
     static async delete(userID) {

@@ -14,9 +14,15 @@ class Admin extends AdminDef {
         super(userID, username, email, contactNumber);
         this.roleTitle = roleTitle;
     }
-    getRole() { return "Admin"; }
-    getRoleTitle() { return this.roleTitle; }
-    setRoleTitle(roleTitle) { this.roleTitle = roleTitle; }
+    getRole() {
+        return "Admin";
+    }
+    getRoleTitle() {
+        return this.roleTitle;
+    }
+    setRoleTitle(roleTitle) {
+        this.roleTitle = roleTitle;
+    }
     static async getAll() {
         const query = `
             SELECT 
@@ -55,37 +61,6 @@ class Admin extends AdminDef {
         `;
         const result = await dbConnection_1.default.query(query, [userID]);
         return result.rows[0];
-    }
-    static async add(username, email, contactNumber, roleTitle) {
-        const client = await dbConnection_1.default.connect();
-        try {
-            await client.query("BEGIN");
-            const usersRes = await client.query("INSERT INTO Users (username, email, contactNumber) VALUES ($1, $2, $3) RETURNING userID", [username, email, contactNumber]);
-            const userID = usersRes.rows[0].userid;
-            await client.query("INSERT INTO Admin (userID, roleTitle) VALUES ($1, $2)", [userID, roleTitle]);
-            await client.query("COMMIT");
-            return { userID, username, email, contactNumber, roleTitle };
-        }
-        catch (error) {
-            await client.query("ROLLBACK");
-            throw error;
-        }
-        finally {
-            client.release();
-        }
-    }
-    static async removeUsers(targetUserID) {
-        const result = await dbConnection_1.default.query("DELETE FROM Users WHERE userID = $1 RETURNING userID", [targetUserID]);
-        return result.rows[0];
-    }
-    static async generateOrdersReport(allOrders) {
-        const total = allOrders.length;
-        const totalRevenue = allOrders.reduce((sum, o) => sum + (o.total || 0), 0);
-        return {
-            totalOrders: total,
-            totalRevenue: totalRevenue.toFixed(2),
-            orders: allOrders,
-        };
     }
 }
 exports.Admin = Admin;

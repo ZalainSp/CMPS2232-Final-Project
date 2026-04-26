@@ -16,12 +16,24 @@ class Driver extends DriverDef {
         this.vehicleType = vehicleType;
         this.available = available;
     }
-    getRole() { return "Driver"; }
-    getDriverID() { return this.driverID; }
-    getVehicleType() { return this.vehicleType; }
-    isAvailable() { return this.available; }
-    setAvailability(available) { this.available = available; }
-    setVehicleType(vehicleType) { this.vehicleType = vehicleType; }
+    getRole() {
+        return "Driver";
+    }
+    getDriverID() {
+        return this.driverID;
+    }
+    getVehicleType() {
+        return this.vehicleType;
+    }
+    isAvailable() {
+        return this.available;
+    }
+    setAvailability(available) {
+        this.available = available;
+    }
+    setVehicleType(vehicleType) {
+        this.vehicleType = vehicleType;
+    }
     static async getAll() {
         const query = `
             SELECT u.userID, u.username, u.email, u.contactNumber, d.driverID, d.vehicleType, d.available
@@ -60,7 +72,15 @@ class Driver extends DriverDef {
             const userID = usersRes.rows[0].userid;
             await client.query("INSERT INTO Driver (userID, driverID, vehicleType, available) VALUES ($1, $2, $3, TRUE)", [userID, driverID, vehicleType]);
             await client.query("COMMIT");
-            return { userID, username, email, contactNumber, driverID, vehicleType, available: true };
+            return {
+                userID,
+                username,
+                email,
+                contactNumber,
+                driverID,
+                vehicleType,
+                available: true,
+            };
         }
         catch (error) {
             await client.query("ROLLBACK");

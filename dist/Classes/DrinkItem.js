@@ -10,17 +10,21 @@ class DrinkItem extends DrinkItemDef {
         super(itemID, itemName, basePrice, available);
         this.cupSize = cupSize;
     }
-    getPrice() { return this.basePrice; }
-    getDescription() { return `${this.itemName} (${this.cupSize}) - $${this.basePrice.toFixed(2)}`; }
-    getCupSize() { return this.cupSize; }
-    setCupSize(size) { this.cupSize = size; }
-    static async getAll() {
+    getPrice() {
+        return this.basePrice;
     }
-    static async getById(itemID) {
+    getDescription() {
+        return `${this.itemName} (${this.cupSize}) - $${this.basePrice.toFixed(2)}`;
     }
-    static async add(itemName, basePrice, available, cupSize) {
+    getCupSize() {
+        return this.cupSize;
     }
-    static async updateCupSize(itemID, cupSize) {
+    setCupSize(size) {
+        this.cupSize = size;
     }
+    static async getAll() { }
+    static async getById(itemID) { }
+    static async add(itemName, basePrice, available, cupSize) { }
+    static async updateCupSize(itemID, cupSize) { }
 }
 exports.DrinkItem = DrinkItem;

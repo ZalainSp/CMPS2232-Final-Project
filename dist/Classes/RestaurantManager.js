@@ -16,12 +16,24 @@ class RestaurantManager extends RestaurantManagerDef {
         this.restaurantName = restaurantName;
         this.openingHours = openingHours;
     }
-    getRole() { return "RestaurantManager"; }
-    getRestaurantID() { return this.restaurantID; }
-    getRestaurantName() { return this.restaurantName; }
-    getOpeningHours() { return this.openingHours; }
-    setRestaurantName(name) { this.restaurantName = name; }
-    setOpeningHours(hours) { this.openingHours = hours; }
+    getRole() {
+        return "RestaurantManager";
+    }
+    getRestaurantID() {
+        return this.restaurantID;
+    }
+    getRestaurantName() {
+        return this.restaurantName;
+    }
+    getOpeningHours() {
+        return this.openingHours;
+    }
+    setRestaurantName(name) {
+        this.restaurantName = name;
+    }
+    setOpeningHours(hours) {
+        this.openingHours = hours;
+    }
     static async getAll() {
         const query = `
             SELECT u.userID, u.username, u.email, u.contactNumber,
@@ -52,7 +64,15 @@ class RestaurantManager extends RestaurantManagerDef {
             const userID = usersRes.rows[0].userid;
             await client.query("INSERT INTO RestaurantManager (userID, restaurantID, restaurantName, openingHours) VALUES ($1, $2, $3, $4)", [userID, restaurantID, restaurantName, openingHours]);
             await client.query("COMMIT");
-            return { userID, username, email, contactNumber, restaurantID, restaurantName, openingHours };
+            return {
+                userID,
+                username,
+                email,
+                contactNumber,
+                restaurantID,
+                restaurantName,
+                openingHours,
+            };
         }
         catch (error) {
             await client.query("ROLLBACK");
