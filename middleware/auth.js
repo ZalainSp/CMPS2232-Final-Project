@@ -1,4 +1,4 @@
-const { Auth } = require("../dist/classes/Auth");
+const { Auth } = require("../dist/Classes/Auth");
 
 const authMiddleware = async (req, res, next) => {
     const header = req.headers.authorization;

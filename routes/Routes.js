@@ -33,7 +33,9 @@ const {
     getAllManagers,
     getManagerById,
     updateRestaurantInfo,
+    getPublicMenu,
     getMenu,
+    addManagerMenuItem,
     getOrdersQueue,
     updateOrderstatus
 } = require("../controllers/controller");
@@ -43,6 +45,9 @@ router.post("/auth/login", login);
 router.post("/auth/register", register);
 router.post("/auth/guest", guestLogin);
 router.post("/auth/logout", authMiddleware, logout);
+
+// MENU
+router.get("/menu", authMiddleware, getPublicMenu);
 
 // ADMIN
 router.get("/admin", authMiddleware, getAllAdmins);
@@ -71,6 +76,7 @@ router.get("/managers", authMiddleware, getAllManagers);
 router.get("/managers/:userID", authMiddleware, getManagerById);
 router.put("/managers/:userID", authMiddleware, updateRestaurantInfo);
 router.get("/managers/:userID/menu", authMiddleware, getMenu);
+router.post("/managers/:userID/menu", authMiddleware, addManagerMenuItem);
 router.get("/managers/:userID/orders", authMiddleware, getOrdersQueue);
 router.put("/managers/orders/:orderID/status", authMiddleware, updateOrderstatus);
 

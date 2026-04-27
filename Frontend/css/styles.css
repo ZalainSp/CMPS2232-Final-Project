@@ -367,3 +367,40 @@ input, select { font-family: inherit; font-size: .95rem; }
 @media (max-width: 900px) {
   .cart-page-grid { grid-template-columns: 1fr; }
 }
+
+/* ── DASHBOARD CONTROL POLISH ── */
+.topbar {
+  justify-content: space-between;
+}
+
+.topbar-title {
+  min-width: 0;
+}
+
+.btn-notif {
+  min-height: 38px;
+  border: 1px solid transparent;
+}
+
+.btn-notif .badge {
+  min-width: 18px;
+  text-align: center;
+}
+
+.btn-notif .badge:empty {
+  display: none;
+}
+
+#logout-btn {
+  width: auto;
+  min-width: 52px;
+  height: 38px;
+  padding: 0 .75rem;
+  border: 1px solid rgba(255,255,255,.18);
+  color: rgba(255,255,255,.85);
+}
+
+#logout-btn:hover {
+  background: rgba(255,255,255,.12);
+  color: #fff;
+}

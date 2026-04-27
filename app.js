@@ -22,15 +22,25 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, "Frontend")));
 
 app.get("/login", (req, res) => {
-    res.sendFile(path.join(__dirname, "Frontend", "login.html"));
+    res.redirect("/html/login.html");
+});
+
+app.get("/register", (req, res) => {
+    res.redirect("/html/register.html");
 });
 
 /* ---------------- API ---------------- */
 app.use("/api", routes);
+app.use("/api", (req, res) => {
+    res.status(404).json({
+        success: false,
+        message: "API route not found"
+    });
+});
 
 /* ---------------- HOME ---------------- */
 app.get("/", (req, res) => {
-    res.sendFile(path.join(__dirname, "Frontend", "login.html"));
+    res.redirect("/html/login.html");
 });
 
 const PORT = 3000;

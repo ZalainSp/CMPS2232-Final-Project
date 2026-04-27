@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
 
-    const logoutBtn = document.querySelector(".btn-icon");
+    const logoutBtn = document.getElementById("logout-btn") || document.querySelector(".sidebar-footer .btn-icon");
 
     if (!logoutBtn) return;
 

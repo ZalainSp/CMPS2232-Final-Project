@@ -1,4 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
+    const apiBase = window.location.port === "3000" ? "" : "http://localhost:3000";
 
     // ── SHOW/HIDE PASSWORD ──
     const showBtns = document.querySelectorAll(".show-btn");
@@ -47,20 +48,24 @@ document.addEventListener("DOMContentLoaded", () => {
             vehicleType: reg("reg-vehicle")
         };
 
-        const res = await fetch("/api/auth/register", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(body)
-        });
+        try {
+            const res = await fetch(`${apiBase}/api/auth/register`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body)
+            });
 
-        const data = await res.json();
+            const data = await res.json();
 
-        if (!data.success) {
-            alert(data.message);
-            return;
+            if (!res.ok || !data.success) {
+                alert(data.message || "Registration failed");
+                return;
+            }
+
+            window.location.href = "login.html";
+        } catch (err) {
+            alert(err.message || "Registration failed");
         }
-
-        window.location.href = "login.html";
     });
 
     function reg(id) {
