@@ -29,6 +29,14 @@ app.get("/register", (req, res) => {
     res.redirect("/html/register.html");
 });
 
+app.get("/order-confirmation", (req, res) => {
+    res.redirect("/html/order-confirmation.html");
+});
+
+app.get("/checkout", (req, res) => {
+    res.redirect("/html/checkout.html");
+});
+
 /* ---------------- API ---------------- */
 app.use("/api", routes);
 app.use("/api", (req, res) => {

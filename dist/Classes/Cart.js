@@ -68,6 +68,7 @@ class Cart extends CartDef {
         return result.rows;
     }
     static async addItem(userID, itemID, quantity = 1) {
+        await dbConnection_1.default.query("INSERT INTO Cart (userID) VALUES ($1) ON CONFLICT (userID) DO NOTHING", [userID]);
         //increase quantity if already in cart
         const result = await dbConnection_1.default.query(`INSERT INTO CartItem (userID, itemID, quantity)
              VALUES ($1, $2, $3)

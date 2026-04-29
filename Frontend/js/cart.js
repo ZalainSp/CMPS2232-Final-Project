@@ -1,4 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
+    const apiBase = window.location.port === "3000" ? "" : "http://localhost:3000";
+    const token = localStorage.getItem("token");
     const tableBody = document.getElementById("cart-table-body");
     const emptyState = document.getElementById("cart-empty-state");
     const clearCartBtn = document.getElementById("clear-cart-btn");
@@ -11,29 +13,75 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const DELIVERY_FEE = 5;
     const TAX_RATE = 0.125;
+    let cartState = [];
 
-    const readCart = () => {
+    const readJsonSafely = async (res) => {
+        const text = await res.text();
+
         try {
-            const parsed = JSON.parse(localStorage.getItem("cartItems") || "[]");
-            return Array.isArray(parsed) ? parsed : [];
+            return JSON.parse(text);
         } catch {
-            return [];
+            throw new Error(`Expected JSON but received non-JSON response (status ${res.status})`);
         }
     };
 
-    const writeCart = (cart) => {
-        localStorage.setItem("cartItems", JSON.stringify(cart));
+    const fetchCart = async () => {
+        const res = await fetch(`${apiBase}/api/cart`, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+
+        if (!res.ok) {
+            return [];
+        }
+
+        const data = await readJsonSafely(res);
+        return Array.isArray(data.items) ? data.items : [];
+    };
+
+    const syncCartState = (nextCart) => {
+        cartState = Array.isArray(nextCart) ? nextCart : [];
+        renderCart();
+    };
+
+    const updateCartItem = async (itemID, quantity) => {
+        await fetch(`${apiBase}/api/cart/items/${itemID}`, {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({ quantity })
+        });
+    };
+
+    const removeCartItem = async (itemID) => {
+        await fetch(`${apiBase}/api/cart/items/${itemID}`, {
+            method: "DELETE",
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+    };
+
+    const clearCart = async () => {
+        await fetch(`${apiBase}/api/cart`, {
+            method: "DELETE",
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
     };
 
     const formatMoney = (n) => `$${Number(n).toFixed(2)}`;
 
-    const render = () => {
+    const renderCart = () => {
         if (!tableBody || !emptyState) return;
 
-        const cart = readCart();
         tableBody.innerHTML = "";
 
-        if (!cart.length) {
+        if (!cartState.length) {
             emptyState.style.display = "block";
             if (itemCountEl) itemCountEl.textContent = "0 items";
             if (subtotalEl) subtotalEl.textContent = formatMoney(0);
@@ -45,7 +93,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         emptyState.style.display = "none";
 
-        cart.forEach((item) => {
+        cartState.forEach((item) => {
             const price = Number(item.basePrice);
             const qty = Number(item.quantity);
             const row = document.createElement("tr");
@@ -71,10 +119,10 @@ document.addEventListener("DOMContentLoaded", () => {
             tableBody.appendChild(row);
         });
 
-        const subtotal = cart.reduce((sum, item) => sum + Number(item.basePrice) * Number(item.quantity), 0);
+        const subtotal = cartState.reduce((sum, item) => sum + Number(item.basePrice) * Number(item.quantity), 0);
         const tax = subtotal * TAX_RATE;
         const total = subtotal + tax + DELIVERY_FEE;
-        const itemCount = cart.reduce((sum, item) => sum + Number(item.quantity), 0);
+        const itemCount = cartState.reduce((sum, item) => sum + Number(item.quantity), 0);
 
         if (itemCountEl) itemCountEl.textContent = `${itemCount} item${itemCount === 1 ? "" : "s"}`;
         if (subtotalEl) subtotalEl.textContent = formatMoney(subtotal);
@@ -84,40 +132,86 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     if (tableBody) {
-        tableBody.addEventListener("click", (event) => {
+        tableBody.addEventListener("click", async (event) => {
             const button = event.target.closest("button[data-action]");
             if (!button) return;
 
             const action = button.dataset.action;
             const itemID = Number(button.dataset.id);
-            const cart = readCart();
-            const target = cart.find((item) => Number(item.itemID) === itemID);
+            const target = cartState.find((item) => Number(item.itemID) === itemID);
 
             if (!target) return;
 
+            const previousCart = cartState.map((item) => ({ ...item }));
+
             if (action === "increase") {
-                target.quantity += 1;
+                syncCartState(
+                    cartState.map((item) =>
+                        Number(item.itemID) === itemID
+                            ? { ...item, quantity: Number(item.quantity) + 1 }
+                            : item,
+                    ),
+                );
+                try {
+                    await updateCartItem(itemID, Number(target.quantity) + 1);
+                } catch (error) {
+                    syncCartState(previousCart);
+                    alert(error.message || "Unable to update cart item.");
+                }
             } else if (action === "decrease") {
-                target.quantity -= 1;
+                const nextQuantity = Number(target.quantity) - 1;
+                if (nextQuantity <= 0) {
+                    syncCartState(cartState.filter((item) => Number(item.itemID) !== itemID));
+                    try {
+                        await removeCartItem(itemID);
+                    } catch (error) {
+                        syncCartState(previousCart);
+                        alert(error.message || "Unable to update cart item.");
+                    }
+                } else {
+                    syncCartState(
+                        cartState.map((item) =>
+                            Number(item.itemID) === itemID
+                                ? { ...item, quantity: nextQuantity }
+                                : item,
+                        ),
+                    );
+                    try {
+                        await updateCartItem(itemID, nextQuantity);
+                    } catch (error) {
+                        syncCartState(previousCart);
+                        alert(error.message || "Unable to update cart item.");
+                    }
+                }
             } else if (action === "remove") {
-                const next = cart.filter((item) => Number(item.itemID) !== itemID);
-                writeCart(next);
-                render();
+                syncCartState(cartState.filter((item) => Number(item.itemID) !== itemID));
+                try {
+                    await removeCartItem(itemID);
+                } catch (error) {
+                    syncCartState(previousCart);
+                    alert(error.message || "Unable to remove cart item.");
+                }
                 return;
             }
-
-            const next = cart.filter((item) => Number(item.quantity) > 0);
-            writeCart(next);
-            render();
         });
     }
 
     if (clearCartBtn) {
-        clearCartBtn.addEventListener("click", () => {
-            writeCart([]);
-            render();
+        clearCartBtn.addEventListener("click", async () => {
+            const previousCart = cartState.map((item) => ({ ...item }));
+            syncCartState([]);
+
+            try {
+                await clearCart();
+            } catch (error) {
+                syncCartState(previousCart);
+                alert(error.message || "Unable to clear cart.");
+            }
         });
     }
 
-    render();
+    (async () => {
+        cartState = await fetchCart();
+        renderCart();
+    })();
 });

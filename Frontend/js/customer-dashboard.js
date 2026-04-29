@@ -17,21 +17,25 @@ document.addEventListener("DOMContentLoaded", async () => {
     const grid = document.getElementById("menu-grid");
     if (!grid) return;
 
-    const readCart = () => {
-        try {
-            const parsed = JSON.parse(localStorage.getItem("cartItems") || "[]");
-            return Array.isArray(parsed) ? parsed : [];
-        } catch {
+    const ordersTableBody = document.getElementById("orders-table-body");
+
+    const fetchCart = async () => {
+        const res = await fetch(`${apiBase}/api/cart`, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+
+        if (!res.ok) {
             return [];
         }
+
+        const data = await readJsonSafely(res);
+        return Array.isArray(data.items) ? data.items : [];
     };
 
-    const saveCart = (cart) => {
-        localStorage.setItem("cartItems", JSON.stringify(cart));
-    };
-
-    const updateActiveOrdersBadge = () => {
-        const cart = readCart();
+    const updateActiveOrdersBadge = async () => {
+        const cart = await fetchCart();
         const totalQty = cart.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
         const pill = document.getElementById("active-orders-pill");
         if (pill) {
@@ -39,27 +43,69 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     };
 
-    const addToCart = (item) => {
-        const cart = readCart();
-        const existing = cart.find((c) => Number(c.itemID) === Number(item.itemID));
-
-        if (existing) {
-            existing.quantity += 1;
-        } else {
-            cart.push({
+    const addToCart = async (item) => {
+        await fetch(`${apiBase}/api/cart/items`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({
                 itemID: item.itemID,
-                itemName: item.itemName,
-                basePrice: Number(item.basePrice),
-                type: item.type,
-                portionSize: item.portionSize || null,
-                cupSize: item.cupSize || null,
-                discountAmount: item.discountAmount || null,
                 quantity: 1
-            });
+            })
+        });
+
+        await updateActiveOrdersBadge();
+    };
+
+    const renderOrdersTable = (orders) => {
+        if (!ordersTableBody) return;
+
+        if (!Array.isArray(orders) || orders.length === 0) {
+            ordersTableBody.innerHTML = `
+                <tr>
+                    <td colspan="4" style="color:var(--gray);padding:1rem 1.2rem;">No orders yet.</td>
+                </tr>
+            `;
+            return;
         }
 
-        saveCart(cart);
-        updateActiveOrdersBadge();
+        ordersTableBody.innerHTML = orders
+            .map((order) => {
+                const placedAt = order.orderDate ? new Date(order.orderDate).toLocaleString() : "—";
+                return `
+                    <tr>
+                        <td>#${order.orderID ?? "—"}</td>
+                        <td>${placedAt}</td>
+                        <td>${order.deliveryType || "—"}</td>
+                        <td>${order.status || "—"}</td>
+                    </tr>
+                `;
+            })
+            .join("");
+    };
+
+    const loadOrdersHistory = async () => {
+        const user = JSON.parse(localStorage.getItem("user") || "null");
+        if (!user?.userID) {
+            renderOrdersTable([]);
+            return;
+        }
+
+        const ordersRes = await fetch(`${apiBase}/api/customers/${user.userID}/orders`, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+
+        if (ordersRes.ok) {
+            const ordersData = await readJsonSafely(ordersRes);
+            renderOrdersTable(Array.isArray(ordersData.orders) ? ordersData.orders : []);
+            return;
+        }
+
+        renderOrdersTable([]);
     };
 
     try {
@@ -79,6 +125,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (!items.length) {
             grid.innerHTML = "<p>No menu items available yet.</p>";
             updateActiveOrdersBadge();
+            await loadOrdersHistory();
             return;
         }
 
@@ -109,14 +156,16 @@ document.addEventListener("DOMContentLoaded", async () => {
             const selected = items.find((i) => Number(i.itemID) === itemID);
             if (!selected) return;
 
-            addToCart(selected);
-            button.textContent = "✓";
-            setTimeout(() => {
-                button.textContent = "+";
-            }, 600);
+            addToCart(selected).then(() => {
+                button.textContent = "✓";
+                setTimeout(() => {
+                    button.textContent = "+";
+                }, 600);
+            });
         });
 
-        updateActiveOrdersBadge();
+        await updateActiveOrdersBadge();
+        await loadOrdersHistory();
     } catch (err) {
         grid.innerHTML = `<p>Unable to load menu: ${err.message}</p>`;
     }

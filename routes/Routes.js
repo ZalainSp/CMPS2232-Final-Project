@@ -20,8 +20,14 @@ const {
     getAllCustomers,
     getCustomerById,
     updateDeliveryAddress,
+    getCart,
+    addCartItem,
+    updateCartItem,
+    removeCartItem,
+    clearCart,
     getOrdersHistory,
     trackOrderstatus,
+    placeCustomerOrder,
 
     getAllDrivers,
     getAvailableDrivers,
@@ -60,8 +66,15 @@ router.get("/admin/reports/orders", authMiddleware, generateOrdersReport);
 router.get("/customers", authMiddleware, getAllCustomers);
 router.get("/customers/:userID", authMiddleware, getCustomerById);
 router.put("/customers/:userID/address", authMiddleware, updateDeliveryAddress);
+router.post("/customers/orders", authMiddleware, placeCustomerOrder);
 router.get("/customers/:userID/orders", authMiddleware, getOrdersHistory);
 router.get("/customers/orders/:orderID/track", authMiddleware, trackOrderstatus);
+
+router.get("/cart", authMiddleware, getCart);
+router.post("/cart/items", authMiddleware, addCartItem);
+router.patch("/cart/items/:itemID", authMiddleware, updateCartItem);
+router.delete("/cart/items/:itemID", authMiddleware, removeCartItem);
+router.delete("/cart", authMiddleware, clearCart);
 
 // DRIVER
 router.get("/drivers", authMiddleware, getAllDrivers);

@@ -15,7 +15,7 @@ class Auth extends AuthDef {
     // =========================
     static async login(username, password, role) {
         try {
-            const usersRes = await dbConnection_1.default.query('SELECT userID AS "userID", username AS "username", email AS "email", passwordHash AS "passwordHash", passwordSalt AS "passwordSalt" FROM Users WHERE username = $1', [username]);
+            const usersRes = await dbConnection_1.default.query('SELECT userID AS "userID", username AS "username", email AS "email", contactNumber AS "contactNumber", passwordHash AS "passwordHash", passwordSalt AS "passwordSalt" FROM Users WHERE username = $1', [username]);
             if (usersRes.rowCount === 0) {
                 return { success: false, message: "Invalid username or password" };
             }
@@ -45,6 +45,7 @@ class Auth extends AuthDef {
                     userID: user.userID,
                     username: user.username,
                     email: user.email,
+                    contactNumber: user.contactNumber,
                     role,
                 },
             };
@@ -74,6 +75,9 @@ class Auth extends AuthDef {
             const userRes = await client.query('INSERT INTO Users (username, email, contactNumber, passwordHash, passwordSalt) VALUES ($1,$2,$3,$4,$5) RETURNING userID AS "userID"', [username, email, contactNumber, hash, salt]);
             const userID = userRes.rows[0].userID;
             await Auth.insertRoleRecord(client, userID, role, data);
+            if (role === "Customer") {
+                await client.query("INSERT INTO Cart (userID) VALUES ($1) ON CONFLICT (userID) DO NOTHING", [userID]);
+            }
             await client.query("COMMIT");
             const token = await Auth.createSession(userID, role);
             return {

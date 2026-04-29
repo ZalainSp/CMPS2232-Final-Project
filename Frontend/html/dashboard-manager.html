@@ -20,7 +20,7 @@
         <div class="nav-item" data-target="manager-menu">Menu Management</div>
         <div class="nav-item" data-target="manager-stats">Revenue</div>
         <div class="nav-label">Account</div>
-        <div class="nav-item" data-target="manager-home">Profile</div>
+        <div class="nav-item" data-target="profile-section">Profile</div>
       </nav>
       <div class="sidebar-footer">
         <div class="users-chip">
@@ -178,10 +178,34 @@
           </div>
         </div>
 
+        <div id="profile-section" class="page-section" style="margin-top:2rem;">
+          <div class="section-header">
+            <h3>My Profile</h3>
+          </div>
+          <div class="profile-card">
+            <div class="profile-header">
+              <div class="profile-avatar" id="profile-avatar-lg">M</div>
+              <div class="profile-info">
+                <h3 id="profile-username">Username</h3>
+                <p id="profile-role">Manager</p>
+              </div>
+            </div>
+            <div class="profile-section-title">Account Details</div>
+            <div class="profile-details">
+              <div class="detail-row"><span class="detail-label">Email</span><span class="detail-value" id="profile-email">--</span></div>
+              <div class="detail-row"><span class="detail-label">Contact Number</span><span class="detail-value" id="profile-contact">--</span></div>
+              <div class="detail-row"><span class="detail-label">User ID</span><span class="detail-value" id="profile-id">--</span></div>
+              <div class="detail-row"><span class="detail-label">Role</span><span class="detail-value" id="profile-role-detail">Manager</span></div>
+              <div class="detail-row"><span class="detail-label">Member Since</span><span class="detail-value" id="profile-joined">--</span></div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </main>
   </div>
   <script src="../js/auth-guard.js"></script>
+  <script src="../js/profile-common.js"></script>
   <script src="../js/dashboard-common.js"></script>
   <script src="../js/dashboard-tabs.js"></script>
   <script src="../js/manager-dashboard.js"></script>

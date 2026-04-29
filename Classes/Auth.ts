@@ -27,6 +27,7 @@ export interface AuthResult {
     userID: number;
     username: string;
     email: string;
+    contactNumber?: string;
     role: string;
   };
 }
@@ -42,7 +43,7 @@ export class Auth extends AuthDef {
   ): Promise<AuthResult> {
     try {
       const usersRes = await db.query(
-        'SELECT userID AS "userID", username AS "username", email AS "email", passwordHash AS "passwordHash", passwordSalt AS "passwordSalt" FROM Users WHERE username = $1',
+        'SELECT userID AS "userID", username AS "username", email AS "email", contactNumber AS "contactNumber", passwordHash AS "passwordHash", passwordSalt AS "passwordSalt" FROM Users WHERE username = $1',
         [username],
       );
 
@@ -85,6 +86,7 @@ export class Auth extends AuthDef {
           userID: user.userID,
           username: user.username,
           email: user.email,
+          contactNumber: user.contactNumber,
           role,
         },
       };
@@ -130,6 +132,10 @@ export class Auth extends AuthDef {
       const userID = userRes.rows[0].userID;
 
       await Auth.insertRoleRecord(client, userID, role, data);
+
+      if (role === "Customer") {
+        await client.query("INSERT INTO Cart (userID) VALUES ($1) ON CONFLICT (userID) DO NOTHING", [userID]);
+      }
 
       await client.query("COMMIT");
 

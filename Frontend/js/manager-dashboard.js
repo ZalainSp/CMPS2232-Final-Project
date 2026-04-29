@@ -22,6 +22,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!token || !user) return;
 
     const listEl = document.getElementById("menu-list");
+    const ordersQueueEl = document.getElementById("orders-queue");
     const formEl = document.getElementById("add-item-form");
     const addBtn = document.getElementById("add-item-btn");
     const cancelBtn = document.getElementById("cancel-add-btn");
@@ -59,6 +60,43 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     };
 
+    const formatMoney = (value) => `$${Number(value).toFixed(2)}`;
+
+    const renderOrdersQueue = (orders) => {
+        if (!ordersQueueEl) return;
+
+        if (!Array.isArray(orders) || orders.length === 0) {
+            ordersQueueEl.innerHTML = "<p>No active orders right now.</p>";
+            return;
+        }
+
+        ordersQueueEl.innerHTML = "";
+
+        orders.forEach((order) => {
+            const card = document.createElement("div");
+            card.className = "orders-card";
+            card.innerHTML = `
+                <div class="orders-id">#${order.orderID}</div>
+                <div class="orders-info">
+                  <div class="orders-customer">${order.customerName || "Customer"}</div>
+                  <div class="orders-items">${order.itemsSummary || "Items unavailable"}</div>
+                </div>
+                <span class="status status-${String(order.status || "pending").toLowerCase().replace(/\s+/g, "-")}">${order.status || "Pending"}</span>
+            `;
+            ordersQueueEl.appendChild(card);
+        });
+    };
+
+    const renderStats = (stats) => {
+        const activeOrders = document.getElementById("stat-active-orders");
+        const completedToday = document.getElementById("stat-completed");
+        const revenueToday = document.getElementById("stat-revenue");
+
+        if (activeOrders) activeOrders.textContent = String(stats?.activeOrders ?? 0);
+        if (completedToday) completedToday.textContent = String(stats?.completedToday ?? 0);
+        if (revenueToday) revenueToday.textContent = formatMoney(stats?.revenueToday ?? 0);
+    };
+
     const loadMenu = async () => {
         const res = await fetch(`${apiBase}/api/managers/${user.userID}/menu`, {
             headers: { Authorization: `Bearer ${token}` }
@@ -76,6 +114,20 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (statMenu) {
             statMenu.textContent = String(items.length);
         }
+    };
+
+    const loadManagerOrders = async () => {
+        const res = await fetch(`${apiBase}/api/managers/${user.userID}/orders`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (!res.ok) {
+            throw new Error(`Unable to load manager orders (${res.status})`);
+        }
+
+        const data = await readJsonSafely(res);
+        renderOrdersQueue(Array.isArray(data.orders) ? data.orders : []);
+        renderStats(data.stats || {});
     };
 
     if (itemType) {
@@ -160,9 +212,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     try {
         await loadMenu();
+        await loadManagerOrders();
     } catch (err) {
         if (listEl) {
             listEl.innerHTML = `<p>${err.message}</p>`;
+        }
+        if (ordersQueueEl) {
+            ordersQueueEl.innerHTML = `<p>${err.message}</p>`;
         }
     }
 });

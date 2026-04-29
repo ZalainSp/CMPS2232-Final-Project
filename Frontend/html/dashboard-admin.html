@@ -42,100 +42,88 @@
 
       <div class="page">
 
-        <!-- HOME SECTION -->
-        <div id="home-section" class="page-section">
-
-        <div class="welcome-banner">
-          <div>
-            <h2 class="welcome-title">System Admin</h2>
-            <p class="welcome-sub">Oversee all platform activity</p>
-          </div>
-          <!-- Admin.generateOrdersReport() -->
-          <button class="btn btn-danger" id="gen-report-btn">Generate Report</button>
-        </div>
-
-        <!-- System Stats -->
-        <div class="stats-row">
-          <div class="stat-card">
-            <div class="stat-val" id="stat-users">--</div>
-            <div class="stat-label">Total Users</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-val" id="stat-restaurants">--</div>
-            <div class="stat-label">Restaurants</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-val" id="stat-orders">--</div>
-            <div class="stat-label">Total Orders</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-val" id="stat-revenue">--</div>
-            <div class="stat-label">Total Revenue</div>
-          </div>
-        </div>
-
-        <!-- Users Management (Admin.removeUsers) -->
-        <div class="section-header"><h3>Users Management</h3></div>
-        <div class="users-table-wrap">
-          <table class="data-table" id="users-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Username</th>
-                <th>Role</th>
-                <th>Email</th>
-                <th>Contact</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="users-table-body">
-              <!--
-              Backend renders rows here per Users object.
-              Structure per row:
-              <tr>
-                <td>#userID</td>
-                <td><strong>username</strong></td>
-                <td><span class="tag">role</span></td>
-                <td>email</td>
-                <td>contactNumber</td>
-                <td><span class="status status-[ready|pending]">Active|Suspended</span></td>
-                <td>
-                  <button class="btn btn-danger btn-sm" data-users-id="">Remove</button>
-                </td>
-              </tr>
-              -->
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Orders Report (generateOrdersReport) -->
-        <div class="section-header" style="margin-top:2rem;"><h3>Orders Report</h3></div>
-        <div class="report-panel" id="report-panel">
-          <div class="field-row" style="margin-bottom:1rem;">
-            <div class="field">
-              <label for="report-from">From Date</label>
-              <input type="date" id="report-from" name="fromDate"/>
+        <div id="home-section" class="page-section active">
+          <div class="welcome-banner">
+            <div>
+              <h2 class="welcome-title">System Admin</h2>
+              <p class="welcome-sub">Oversee all platform activity</p>
             </div>
-            <div class="field">
-              <label for="report-to">To Date</label>
-              <input type="date" id="report-to" name="toDate"/>
+            <button class="btn btn-danger" id="gen-report-btn">Generate Report</button>
+          </div>
+
+          <div class="stats-row">
+            <div class="stat-card">
+              <div class="stat-val" id="stat-users">--</div>
+              <div class="stat-label">Total Users</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-val" id="stat-restaurants">--</div>
+              <div class="stat-label">Restaurants</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-val" id="stat-orders">--</div>
+              <div class="stat-label">Total Orders</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-val" id="stat-revenue">--</div>
+              <div class="stat-label">Total Revenue</div>
             </div>
           </div>
-          <button class="btn btn-primary" style="width:auto;padding:.7rem 1.8rem;">Generate</button>
+        </div>
 
-          <!-- Report output — backend populates -->
-          <div class="report-output" id="report-output" style="margin-top:1.5rem;display:none;">
-            <div class="summary-line"><span>Total Orders</span><span id="rpt-orders">--</span></div>
-            <div class="summary-line"><span>Total Sales</span><span id="rpt-sales">--</span></div>
-            <div class="summary-line"><span>Average Orders Value</span><span id="rpt-avg">--</span></div>
-            <div class="summary-line total"><span>Total Revenue</span><span id="rpt-revenue">--</span></div>
+        <div id="users-section" class="page-section">
+          <div class="section-header"><h3>Users Management</h3></div>
+          <div class="users-table-wrap">
+            <table class="data-table" id="users-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Username</th>
+                  <th>Role</th>
+                  <th>Email</th>
+                  <th>Contact</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="users-table-body">
+                <!-- rows loaded by admin-dashboard.js -->
+              </tbody>
+            </table>
           </div>
         </div>
 
+        <div id="reports-section" class="page-section">
+          <div class="section-header"><h3>Orders Report</h3></div>
+          <div class="report-panel" id="report-panel">
+            <div class="field-row" style="margin-bottom:1rem;">
+              <div class="field">
+                <label for="report-from">From Date</label>
+                <input type="date" id="report-from" name="fromDate"/>
+              </div>
+              <div class="field">
+                <label for="report-to">To Date</label>
+                <input type="date" id="report-to" name="toDate"/>
+              </div>
+            </div>
+            <button class="btn btn-primary" style="width:auto;padding:.7rem 1.8rem;">Generate</button>
+
+            <div class="report-output" id="report-output" style="margin-top:1.5rem;display:none;">
+              <div class="summary-line"><span>Total Orders</span><span id="rpt-orders">--</span></div>
+              <div class="summary-line"><span>Total Sales</span><span id="rpt-sales">--</span></div>
+              <div class="summary-line"><span>Average Orders Value</span><span id="rpt-avg">--</span></div>
+              <div class="summary-line total"><span>Total Revenue</span><span id="rpt-revenue">--</span></div>
+            </div>
+          </div>
         </div>
 
-        <!-- PROFILE SECTION -->
+        <div id="settings-section" class="page-section">
+          <div class="section-header"><h3>Settings</h3></div>
+          <div class="profile-card">
+            <p>Settings are not configured yet.</p>
+          </div>
+        </div>
+
         <div id="profile-section" class="page-section">
           <div class="welcome-banner">
             <div>
@@ -183,7 +171,8 @@
     </main>
   </div>
   <script src="../js/auth-guard.js"></script>
-  <script src="../js/admin-profile.js"></script>
+  <script src="../js/profile-common.js"></script>
+  <script src="../js/dashboard-tabs.js"></script>
   <script src="../js/admin-dashboard.js"></script>
   <script src="../js/logout.js"></script>
 </body>

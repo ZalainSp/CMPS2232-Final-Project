@@ -28,27 +28,27 @@
           <button class="role-tab">Driver</button>
         </div>
 
-        <form class="form">
+        <form class="form" autocomplete="off">
           <div class="field-row">
             <div class="field">
               <label for="reg-username">Username</label>
-              <input type="text" id="reg-username" name="username" placeholder="your_username"/>
+              <input type="text" id="reg-username" name="username" placeholder="your_username" autocomplete="off"/>
             </div>
             <div class="field">
               <label for="reg-email">Email</label>
-              <input type="email" id="reg-email" name="email" placeholder="you@email.com"/>
+              <input type="email" id="reg-email" name="email" placeholder="you@email.com" autocomplete="off"/>
             </div>
           </div>
 
           <div class="field">
             <label for="reg-contact">Contact Number</label>
-            <input type="tel" id="reg-contact" name="contactNumber" placeholder="+501 XXX-XXXX"/>
+            <input type="tel" id="reg-contact" name="contactNumber" placeholder="+501 XXX-XXXX" autocomplete="off"/>
           </div>
 
           <!-- Customer Fields -->
           <div class="field" id="field-address">
             <label for="reg-address">Delivery Address</label>
-            <input type="text" id="reg-address" name="deliveryAddress" placeholder="123 Main St, Belize City"/>
+            <input type="text" id="reg-address" name="deliveryAddress" placeholder="123 Main St, Belize City" autocomplete="off"/>
           </div>
 
           <!-- Manager Fields (hidden until role selected) -->
@@ -56,11 +56,11 @@
             <div class="field-row">
               <div class="field">
                 <label for="reg-restaurant">Restaurant Name</label>
-                <input type="text" id="reg-restaurant" name="restaurantName" placeholder="My Restaurant"/>
+                <input type="text" id="reg-restaurant" name="restaurantName" placeholder="My Restaurant" autocomplete="off"/>
               </div>
               <div class="field">
                 <label for="reg-hours">Opening Hours</label>
-                <input type="text" id="reg-hours" name="openingHours" placeholder="8am – 10pm"/>
+                <input type="text" id="reg-hours" name="openingHours" placeholder="8am – 10pm" autocomplete="off"/>
               </div>
             </div>
           </div>
@@ -82,14 +82,14 @@
             <div class="field">
               <label for="reg-password">Password</label>
               <div class="input-wrap">
-                <input type="password" id="reg-password" name="password" placeholder="••••••••"/>
+                <input type="password" id="reg-password" name="password" placeholder="••••••••" autocomplete="new-password"/>
                 <button type="button" class="show-btn">Show</button>
               </div>
             </div>
             <div class="field">
               <label for="reg-confirm">Confirm Password</label>
               <div class="input-wrap">
-                <input type="password" id="reg-confirm" name="confirmPassword" placeholder="••••••••"/>
+                <input type="password" id="reg-confirm" name="confirmPassword" placeholder="••••••••" autocomplete="new-password"/>
               </div>
             </div>
           </div>

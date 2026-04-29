@@ -1,5 +1,29 @@
 document.addEventListener("DOMContentLoaded", () => {
     const apiBase = window.location.port === "3000" ? "" : "http://localhost:3000";
+    const form = document.querySelector(".form");
+
+    const resetRegisterForm = () => {
+        if (!form) return;
+
+        form.reset();
+        ["reg-username", "reg-email", "reg-contact", "reg-address", "reg-restaurant", "reg-hours", "reg-vehicle", "reg-password", "reg-confirm"].forEach((id) => {
+            const input = document.getElementById(id);
+            if (input) {
+                input.value = "";
+            }
+        });
+
+        const tabs = document.querySelectorAll(".role-tab");
+        tabs.forEach((tab) => tab.classList.remove("active"));
+        tabs[0]?.classList.add("active");
+
+        const fieldAddress = document.getElementById("field-address");
+        const fieldManager = document.getElementById("field-manager");
+        const fieldDriver = document.getElementById("field-driver");
+        if (fieldAddress) fieldAddress.style.display = "block";
+        if (fieldManager) fieldManager.style.display = "none";
+        if (fieldDriver) fieldDriver.style.display = "none";
+    };
 
     // ── SHOW/HIDE PASSWORD ──
     const showBtns = document.querySelectorAll(".show-btn");
@@ -32,7 +56,17 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    document.querySelector(".form").addEventListener("submit", async (e) => {
+    if (!form) return;
+
+    resetRegisterForm();
+
+    window.addEventListener("pageshow", (event) => {
+        if (event.persisted) {
+            resetRegisterForm();
+        }
+    });
+
+    form.addEventListener("submit", async (e) => {
         e.preventDefault();
 
         const body = {

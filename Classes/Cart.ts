@@ -79,6 +79,8 @@ export class Cart extends CartDef {
     itemID: number,
     quantity = 1,
   ): Promise<any> {
+    await db.query("INSERT INTO Cart (userID) VALUES ($1) ON CONFLICT (userID) DO NOTHING", [userID]);
+
     //increase quantity if already in cart
     const result = await db.query(
       `INSERT INTO CartItem (userID, itemID, quantity)
