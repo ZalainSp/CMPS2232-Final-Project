@@ -106,6 +106,15 @@ export class Auth extends AuthDef {
       return { success: false, message: "Passwords do not match" };
     }
 
+    if (role === "Manager") {
+      if (!data.restaurantName || !data.openingHours) {
+        return {
+          success: false,
+          message: "Manager registration requires restaurant name and opening hours",
+        };
+      }
+    }
+
     const salt = Auth.generateSalt();
     const hash = Auth.hashPassword(password, salt);
 
@@ -223,13 +232,8 @@ export class Auth extends AuthDef {
 
       case "Manager":
         await client.query(
-          "INSERT INTO RestaurantManager (userID, restaurantID, restaurantName, openingHours) VALUES ($1,$2,$3,$4)",
-          [
-            userID,
-            data.restaurantID ?? null,
-            data.restaurantName,
-            data.openingHours,
-          ],
+          "INSERT INTO RestaurantManager (userID, restaurantName, openingHours) VALUES ($1,$2,$3)",
+          [userID, data.restaurantName, data.openingHours],
         );
         break;
 

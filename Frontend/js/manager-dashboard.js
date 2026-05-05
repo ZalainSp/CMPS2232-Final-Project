@@ -21,6 +21,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (!token || !user) return;
 
+    const restaurantInfo = document.getElementById("restaurant-info");
+    if (restaurantInfo && user) {
+        const restName = user.restaurantName || "My Restaurant";
+        const restHours = user.openingHours || "9 AM - 9 PM";
+        restaurantInfo.textContent = `${restName} — ${restHours}`;
+        console.log("Restaurant Info Set:", { restName, restHours, user }); // Debug log
+    }
+
     const listEl = document.getElementById("menu-list");
     const ordersQueueEl = document.getElementById("orders-queue");
     const formEl = document.getElementById("add-item-form");
@@ -88,10 +96,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     };
 
     const renderStats = (stats) => {
+        const restaurants = document.getElementById("stat-restaurants");
         const activeOrders = document.getElementById("stat-active-orders");
         const completedToday = document.getElementById("stat-completed");
         const revenueToday = document.getElementById("stat-revenue");
 
+        if (restaurants) restaurants.textContent = "1";
         if (activeOrders) activeOrders.textContent = String(stats?.activeOrders ?? 0);
         if (completedToday) completedToday.textContent = String(stats?.completedToday ?? 0);
         if (revenueToday) revenueToday.textContent = formatMoney(stats?.revenueToday ?? 0);

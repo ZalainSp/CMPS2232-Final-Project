@@ -21,6 +21,7 @@
         <div class="nav-item" data-target="manager-stats">Revenue</div>
         <div class="nav-label">Account</div>
         <div class="nav-item" data-target="profile-section">Profile</div>
+        <div class="nav-item" data-target="settings-section">Settings</div>
       </nav>
       <div class="sidebar-footer">
         <div class="users-chip">
@@ -53,8 +54,8 @@
         <!-- Stats (backend populates values) -->
         <div class="stats-row" id="manager-stats">
           <div class="stat-card">
-            <div class="stat-val" id="stat-active-orders">--</div>
-            <div class="stat-label">Active Orders</div>
+            <div class="stat-val" id="stat-restaurants">--</div>
+            <div class="stat-label">Restaurants Managed</div>
           </div>
           <div class="stat-card">
             <div class="stat-val" id="stat-completed">--</div>
@@ -201,6 +202,23 @@
           </div>
         </div>
 
+        <div id="settings-section" class="page-section" style="margin-top:2rem;">
+          <div class="section-header">
+            <h3>Account Settings</h3>
+          </div>
+          <div class="settings-card">
+            <div class="setting-item">
+              <div class="setting-info">
+                <h4 style="margin:0 0 0.3rem 0;">Deactivate Account</h4>
+                <p style="margin:0;color:var(--gray);font-size:0.9rem;">Permanently delete your account and all associated data</p>
+              </div>
+              <button class="btn btn-ghost" id="deactivate-btn" style="padding:0.6rem 1.4rem;color:#e74c3c;border-color:#e74c3c;">
+                🗑 Deactivate
+              </button>
+            </div>
+          </div>
+        </div>
+
       </div>
     </main>
   </div>
@@ -208,6 +226,7 @@
   <script src="../js/profile-common.js"></script>
   <script src="../js/dashboard-common.js"></script>
   <script src="../js/dashboard-tabs.js"></script>
+  <script src="../js/settings-common.js"></script>
   <script src="../js/manager-dashboard.js"></script>
   <script src="../js/logout.js"></script>
 </body>

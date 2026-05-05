@@ -10,6 +10,7 @@ const {
     register,
     guestLogin,
     logout,
+    deleteAccount,
 
     getAllAdmins,
     getAdminById,
@@ -51,6 +52,7 @@ router.post("/auth/login", login);
 router.post("/auth/register", register);
 router.post("/auth/guest", guestLogin);
 router.post("/auth/logout", authMiddleware, logout);
+router.delete("/auth/account", authMiddleware, deleteAccount);
 
 // MENU
 router.get("/menu", authMiddleware, getPublicMenu);

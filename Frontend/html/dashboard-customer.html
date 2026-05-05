@@ -15,12 +15,13 @@
       <div class="sidebar-brand"><span>GoBites</span></div>
       <nav class="sidebar-nav">
         <div class="nav-label">Menu</div>
-        <a href="dashboard-customer.html" style="text-decoration:none;"><div class="nav-item active" data-target="customer-home">Home</div></a>
-        <a href="dashboard-customer.html" style="text-decoration:none;"><div class="nav-item" data-target="customer-menu">Browse Menu</div></a>
+        <div class="nav-item active" data-target="customer-home">Home</div>
+        <div class="nav-item" data-target="customer-menu">Browse Menu</div>
         <a href="cart.html" style="text-decoration:none;"><div class="nav-item">My Cart</div></a>
         <div class="nav-item" data-target="customer-orders">My Orders</div>
         <div class="nav-label">Account</div>
         <div class="nav-item" data-target="profile-section">Profile</div>
+        <div class="nav-item" data-target="settings-section">Settings</div>
       </nav>
       <div class="sidebar-footer">
         <div class="users-chip">
@@ -127,6 +128,7 @@
             <thead>
               <tr>
                 <th>Order ID</th>
+                <th>Restaurant ID</th>
                 <th>Date</th>
                 <th>Delivery Type</th>
                 <th>Status</th>
@@ -163,6 +165,23 @@
           </div>
         </div>
 
+        <div id="settings-section" class="page-section" style="margin-top:2rem;">
+          <div class="section-header">
+            <h3>Account Settings</h3>
+          </div>
+          <div class="settings-card">
+            <div class="setting-item">
+              <div class="setting-info">
+                <h4 style="margin:0 0 0.3rem 0;">Deactivate Account</h4>
+                <p style="margin:0;color:var(--gray);font-size:0.9rem;">Permanently delete your account and all associated data</p>
+              </div>
+              <button class="btn btn-ghost" id="deactivate-btn" style="padding:0.6rem 1.4rem;color:#e74c3c;border-color:#e74c3c;">
+                🗑 Deactivate
+              </button>
+            </div>
+          </div>
+        </div>
+
       </div>
     </main>
   </div>
@@ -170,6 +189,7 @@
   <script src="../js/profile-common.js"></script>
   <script src="../js/dashboard-common.js"></script>
   <script src="../js/dashboard-tabs.js"></script>
+  <script src="../js/settings-common.js"></script>
   <script src="../js/customer-dashboard.js"></script>
   <script src="../js/logout.js"></script>
 </body>

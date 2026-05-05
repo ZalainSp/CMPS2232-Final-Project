@@ -56,20 +56,25 @@ class RestaurantManager extends RestaurantManagerDef {
         const result = await dbConnection_1.default.query(query, [userID]);
         return result.rows[0];
     }
-    static async add(username, email, contactNumber, restaurantID, restaurantName, openingHours) {
+    static async getRestaurantIDByUserID(userID) {
+        const result = await dbConnection_1.default.query("SELECT restaurantID FROM RestaurantManager WHERE userID = $1", [userID]);
+        return result.rows[0]?.restaurantid || result.rows[0]?.restaurantID || null;
+    }
+    static async add(username, email, contactNumber, restaurantName, openingHours) {
         const client = await dbConnection_1.default.connect();
         try {
             await client.query("BEGIN");
             const usersRes = await client.query("INSERT INTO Users (username, email, contactNumber) VALUES ($1, $2, $3) RETURNING userID", [username, email, contactNumber]);
             const userID = usersRes.rows[0].userid;
-            await client.query("INSERT INTO RestaurantManager (userID, restaurantID, restaurantName, openingHours) VALUES ($1, $2, $3, $4)", [userID, restaurantID, restaurantName, openingHours]);
+            const rmRes = await client.query("INSERT INTO RestaurantManager (userID, restaurantName, openingHours) VALUES ($1, $2, $3) RETURNING restaurantID", [userID, restaurantName, openingHours]);
+            const newRestaurantID = rmRes.rows && rmRes.rows[0] ? (rmRes.rows[0].restaurantid || rmRes.rows[0].restaurantID) : null;
             await client.query("COMMIT");
             return {
                 userID,
                 username,
                 email,
                 contactNumber,
-                restaurantID,
+                restaurantID: newRestaurantID,
                 restaurantName,
                 openingHours,
             };
@@ -88,9 +93,10 @@ class RestaurantManager extends RestaurantManagerDef {
     }
     static async getMenu(userID) {
         const query = `
-            SELECT mi.itemID, mi.itemName, mi.basePrice, mi.isAvailable
+            SELECT mi.itemID, mi.itemName, mi.basePrice, mi.isAvailable, mi.restaurantID
             FROM MenuItem mi
             JOIN RestaurantManager rm ON rm.userID = $1
+            WHERE mi.restaurantID = rm.restaurantID
             ORDER BY mi.itemName ASC;
         `;
         const result = await dbConnection_1.default.query(query, [userID]);
@@ -98,16 +104,18 @@ class RestaurantManager extends RestaurantManagerDef {
     }
     static async getOrdersQueue(userID) {
         const query = `
-            SELECT o.orderID, o.orderDate, o.deliveryType, o.status, o.userID
-            FROM \`Orders\` o
-            WHERE o.status NOT IN ('Delivered', 'Cancelled')
+            SELECT o.orderID, o.orderDate, o.deliveryType, o.status, o.customerID, o.restaurantID
+            FROM Orders o
+            JOIN RestaurantManager rm ON rm.userID = $1
+            WHERE o.restaurantID = rm.restaurantID
+              AND o.status NOT IN ('Delivered', 'Cancelled')
             ORDER BY o.orderDate ASC;
         `;
-        const result = await dbConnection_1.default.query(query, []);
+        const result = await dbConnection_1.default.query(query, [userID]);
         return result.rows;
     }
     static async updateOrderstatus(orderID, newStatus) {
-        const result = await dbConnection_1.default.query("UPDATE `Orders` SET status = $1 WHERE orderID = $2 RETURNING orderID, status", [newStatus, orderID]);
+        const result = await dbConnection_1.default.query("UPDATE Orders SET status = $1 WHERE orderID = $2 RETURNING orderID, status", [newStatus, orderID]);
         return result.rows[0];
     }
 }

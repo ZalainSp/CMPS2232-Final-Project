@@ -25,9 +25,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const addressInput = document.getElementById("delivery-address");
     const cityInput = document.getElementById("delivery-city");
     const notesInput = document.getElementById("delivery-notes");
-    const paymentOption = document.querySelector(".payment-option.selected");
+    const walletNotice = document.getElementById("wallet-notice");
+    const paymentOptions = document.querySelectorAll(".payment-option");
 
     let deliveryType = document.querySelector(".delivery-pill.selected")?.dataset.type || "standard";
+    let selectedPaymentMethod = "Cash";
 
     const fetchCart = async () => {
         const res = await fetch(`${apiBase}/api/cart`, {
@@ -96,6 +98,17 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
+    paymentOptions.forEach((option) => {
+        option.addEventListener("click", () => {
+            paymentOptions.forEach((node) => node.classList.remove("selected"));
+            option.classList.add("selected");
+            selectedPaymentMethod = option.dataset.method || "Cash";
+            if (walletNotice) {
+                walletNotice.style.display = selectedPaymentMethod === "Digital Wallet" ? "block" : "none";
+            }
+        });
+    });
+
     if (placeOrderBtn) {
         placeOrderBtn.addEventListener("click", async () => {
             const cartItems = await fetchCart();
@@ -126,7 +139,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         promoCode: promoInput?.value?.trim() || null,
                         deliveryAddress: [addressInput?.value?.trim(), cityInput?.value?.trim()].filter(Boolean).join(", ") || null,
                         deliveryNotes: notesInput?.value?.trim() || null,
-                        paymentMethod: paymentOption?.dataset.method || "cash"
+                        paymentMethod: selectedPaymentMethod
                     })
                 });
 
@@ -136,7 +149,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     throw new Error(data.message || "Unable to place order");
                 }
 
-                localStorage.setItem("lastOrder", JSON.stringify(data.order));
+                localStorage.setItem("lastOrder", JSON.stringify(data));
                 localStorage.removeItem("cartItems");
                 window.location.href = "/html/order-confirmation.html";
             } catch (error) {

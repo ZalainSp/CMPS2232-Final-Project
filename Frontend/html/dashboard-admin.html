@@ -18,9 +18,9 @@
         <div class="nav-item active" data-section="home">Home</div>
         <div class="nav-item" data-section="users">Users Management</div>
         <div class="nav-item" data-section="reports">Reports</div>
-        <div class="nav-item" data-section="settings">Settings</div>
         <div class="nav-label">Account</div>
         <div class="nav-item" data-section="profile">Profile</div>
+        <div class="nav-item" data-section="settings">Settings</div>
       </nav>
       <div class="sidebar-footer">
         <div class="users-chip">
@@ -117,13 +117,6 @@
           </div>
         </div>
 
-        <div id="settings-section" class="page-section">
-          <div class="section-header"><h3>Settings</h3></div>
-          <div class="profile-card">
-            <p>Settings are not configured yet.</p>
-          </div>
-        </div>
-
         <div id="profile-section" class="page-section">
           <div class="welcome-banner">
             <div>
@@ -167,12 +160,30 @@
           </div>
         </div>
 
+        <div id="settings-section" class="page-section" style="margin-top:2rem;">
+          <div class="section-header">
+            <h3>Account Settings</h3>
+          </div>
+          <div class="settings-card">
+            <div class="setting-item">
+              <div class="setting-info">
+                <h4 style="margin:0 0 0.3rem 0;">Deactivate Account</h4>
+                <p style="margin:0;color:var(--gray);font-size:0.9rem;">Permanently delete your account and all associated data</p>
+              </div>
+              <button class="btn btn-ghost" id="deactivate-btn" style="padding:0.6rem 1.4rem;color:#e74c3c;border-color:#e74c3c;">
+                🗑 Deactivate
+              </button>
+            </div>
+          </div>
+        </div>
+
       </div>
     </main>
   </div>
   <script src="../js/auth-guard.js"></script>
   <script src="../js/profile-common.js"></script>
   <script src="../js/dashboard-tabs.js"></script>
+  <script src="../js/settings-common.js"></script>
   <script src="../js/admin-dashboard.js"></script>
   <script src="../js/logout.js"></script>
 </body>

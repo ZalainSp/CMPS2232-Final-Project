@@ -12,6 +12,7 @@ export abstract class OrdersDef {
   protected deliveryType!: string;
   protected status!: string;
   protected userID!: number;
+  protected restaurantID!: number | null;
   protected driverID!: number | null;
 
   abstract getOrderID(): number;
@@ -19,6 +20,7 @@ export abstract class OrdersDef {
   abstract getDeliveryType(): string;
   abstract getStatus(): string;
   abstract getUserID(): number;
+  abstract getRestaurantID(): number | null;
   abstract getDriverID(): number | null;
   abstract setStatus(status: string): void;
   abstract setDriverID(driverID: number): void;
@@ -32,6 +34,7 @@ export class Orders extends OrdersDef {
     status: string,
     userID: number,
     driverID: number | null = null,
+    restaurantID: number | null = null,
   ) {
     super();
     this.orderID = orderID;
@@ -39,6 +42,7 @@ export class Orders extends OrdersDef {
     this.deliveryType = deliveryType;
     this.status = status;
     this.userID = userID;
+    this.restaurantID = restaurantID;
     this.driverID = driverID;
   }
 
@@ -57,6 +61,9 @@ export class Orders extends OrdersDef {
   getUserID(): number {
     return this.userID;
   }
+  getRestaurantID(): number | null {
+    return this.restaurantID;
+  }
   getDriverID(): number | null {
     return this.driverID;
   }
@@ -67,22 +74,40 @@ export class Orders extends OrdersDef {
     this.driverID = driverID;
   }
 
-  static async getAll() {
-    const query = `
+  static async getAll(restaurantID: number | null = null) {
+    const query = restaurantID == null
+      ? `
             SELECT
                 o.orderID AS "orderID",
                 o.orderDate AS "orderDate",
                 o.deliveryType AS "deliveryType",
                 o.status AS "status",
                 o.customerID AS "customerID",
+                o.restaurantID AS "restaurantID",
                 o.driverID AS "driverID",
                 u.username AS "customerName"
             FROM Orders o
             LEFT JOIN Customer c ON o.customerID = c.userID
             LEFT JOIN Users u ON c.userID = u.userID
             ORDER BY o.orderDate DESC;
+        `
+      : `
+            SELECT
+                o.orderID AS "orderID",
+                o.orderDate AS "orderDate",
+                o.deliveryType AS "deliveryType",
+                o.status AS "status",
+                o.customerID AS "customerID",
+                o.restaurantID AS "restaurantID",
+                o.driverID AS "driverID",
+                u.username AS "customerName"
+            FROM Orders o
+            LEFT JOIN Customer c ON o.customerID = c.userID
+            LEFT JOIN Users u ON c.userID = u.userID
+              WHERE o.restaurantID = $1
+            ORDER BY o.orderDate DESC;
         `;
-    const result = await db.query(query);
+          const result = restaurantID == null ? await db.query(query) : await db.query(query, [restaurantID]);
     return result.rows;
   }
 
@@ -94,6 +119,7 @@ export class Orders extends OrdersDef {
                 o.deliveryType AS "deliveryType",
                 o.status AS "status",
                 o.customerID AS "customerID",
+                o.restaurantID AS "restaurantID",
                 o.driverID AS "driverID",
                 u.username AS "customerName",
                 c.deliveryAddress AS "deliveryAddress"
@@ -113,6 +139,7 @@ export class Orders extends OrdersDef {
                 o.orderDate AS "orderDate",
                 o.deliveryType AS "deliveryType",
                 o.status AS "status",
+                o.restaurantID AS "restaurantID",
                 o.driverID AS "driverID"
             FROM Orders o
             WHERE o.customerID = $1
@@ -127,6 +154,7 @@ export class Orders extends OrdersDef {
             SELECT
                 oi.itemID AS "itemID",
                 oi.quantity AS "quantity",
+              mi.restaurantID AS "restaurantID",
                 mi.itemName AS "itemName",
                 mi.basePrice AS "basePrice",
                 CASE
@@ -170,8 +198,33 @@ export class Orders extends OrdersDef {
         return { success: false, message: "Cart is empty" };
       }
 
-      //calculate subtotal
-      const subtotal = await Cart.calculateSubtotal(userID);
+      const itemsByRestaurant = new Map<number, any[]>();
+      for (const item of cartItems) {
+        const restaurantID = Number(item.restaurantID);
+        if (Number.isNaN(restaurantID) || restaurantID <= 0) {
+          await client.query("ROLLBACK");
+          return { success: false, message: "Cart items are missing restaurant assignments" };
+        }
+
+        const bucket = itemsByRestaurant.get(restaurantID) || [];
+        bucket.push(item);
+        itemsByRestaurant.set(restaurantID, bucket);
+      }
+
+      if (itemsByRestaurant.size === 0) {
+        await client.query("ROLLBACK");
+        return { success: false, message: "Cart items are missing restaurant assignments" };
+      }
+
+      const orderGroups = Array.from(itemsByRestaurant.entries()).map(([restaurantID, items]) => {
+        const subtotal = items.reduce(
+          (sum: number, item: any) => sum + Number(item.lineTotal || 0),
+          0,
+        );
+        return { restaurantID, items, subtotal };
+      });
+
+      const subtotal = orderGroups.reduce((sum, group) => sum + group.subtotal, 0);
 
       //validate promo
       let discount = 0;
@@ -188,24 +241,54 @@ export class Orders extends OrdersDef {
 
       //tax on (subtotal - discount)
       const taxableAmount = subtotal - discount;
-      const tax = parseFloat((taxableAmount * TAX_RATE).toFixed(2));
-      const total = parseFloat((taxableAmount + tax + deliveryFee).toFixed(2));
+      const orderSummaries: Array<any> = [];
+      let discountRemaining = discount;
 
-      //insert order
-      const orderRes = await client.query(
-        `INSERT INTO Orders (deliveryType, status, customerID)
-                 VALUES ($1, 'Pending', $2)
-                 RETURNING orderID AS "orderID", orderDate AS "orderDate"`,
-        [deliveryType, userID],
-      );
-      const { orderID, orderDate } = orderRes.rows[0];
+      for (let index = 0; index < orderGroups.length; index++) {
+        const group = orderGroups[index];
+        const isLast = index === orderGroups.length - 1;
+        const groupDiscount = discount > 0
+          ? (isLast
+              ? discountRemaining
+              : parseFloat(((discount * group.subtotal) / subtotal).toFixed(2))
+            )
+          : 0;
+        discountRemaining = parseFloat((discountRemaining - groupDiscount).toFixed(2));
 
-      //insert order items from cart
-      for (const item of cartItems) {
-        await client.query(
-          "INSERT INTO OrderItem (orderID, itemID, quantity) VALUES ($1, $2, $3)",
-          [orderID, item.itemID, item.quantity],
+        const groupTaxable = group.subtotal - groupDiscount;
+        const groupTax = parseFloat((groupTaxable * TAX_RATE).toFixed(2));
+        const groupDeliveryFee = deliveryType === "priority" ? PRIORITY_FEE : STANDARD_FEE;
+        const groupTotal = parseFloat((groupTaxable + groupTax + groupDeliveryFee).toFixed(2));
+
+        const orderRes = await client.query(
+          `INSERT INTO Orders (deliveryType, status, customerID, restaurantID)
+                   VALUES ($1, 'Pending', $2, $3)
+                   RETURNING orderID AS "orderID", orderDate AS "orderDate"`,
+          [deliveryType, userID, group.restaurantID],
         );
+        const { orderID, orderDate } = orderRes.rows[0];
+
+        for (const item of group.items) {
+          await client.query(
+            "INSERT INTO OrderItem (orderID, itemID, quantity) VALUES ($1, $2, $3)",
+            [orderID, item.itemID, item.quantity],
+          );
+        }
+
+        orderSummaries.push({
+          orderID,
+          orderDate,
+          deliveryType,
+          status: "Pending",
+          customerID: userID,
+          restaurantID: group.restaurantID,
+          items: group.items,
+          subtotal: group.subtotal,
+          discount: groupDiscount,
+          tax: groupTax,
+          deliveryFee: groupDeliveryFee,
+          total: groupTotal,
+        });
       }
 
       //clear cart
@@ -215,17 +298,14 @@ export class Orders extends OrdersDef {
 
       return {
         success: true,
-        order: {
-          orderID,
-          orderDate,
-          deliveryType,
-          status: "Pending",
-          customerID: userID,
-          subtotal,
-          discount,
-          tax,
-          deliveryFee,
-          total,
+        order: orderSummaries[0] || null,
+        orders: orderSummaries,
+        summary: {
+          subtotal: orderSummaries.reduce((sum, order) => sum + Number(order.subtotal || 0), 0),
+          discount: orderSummaries.reduce((sum, order) => sum + Number(order.discount || 0), 0),
+          tax: orderSummaries.reduce((sum, order) => sum + Number(order.tax || 0), 0),
+          deliveryFee: orderSummaries.reduce((sum, order) => sum + Number(order.deliveryFee || 0), 0),
+          total: orderSummaries.reduce((sum, order) => sum + Number(order.total || 0), 0),
         },
       };
     } catch (error: any) {

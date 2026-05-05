@@ -10,11 +10,16 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!user) return;
 
     const initial = (user.username || "U").trim().charAt(0).toUpperCase() || "U";
-    const joinedDate = new Date().toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric"
-    });
+    const joinedDate = (() => {
+        const src = user.createdAt || user.created_at || null;
+        if (src) {
+            const d = new Date(src);
+            if (!isNaN(d)) {
+                return d.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+            }
+        }
+        return new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+    })();
 
     const setText = (id, value) => {
         const el = document.getElementById(id);

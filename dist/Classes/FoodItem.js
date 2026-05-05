@@ -33,6 +33,7 @@ class FoodItem extends FoodItemDef {
                 mi.itemName AS "itemName",
                 mi.basePrice AS "basePrice",
                 mi.isAvailable AS "isAvailable",
+                  mi.restaurantID AS "restaurantID",
                 fi.portionSize AS "portionSize"
             FROM MenuItem mi
             JOIN FoodItem fi ON mi.itemID = fi.itemID
@@ -48,6 +49,7 @@ class FoodItem extends FoodItemDef {
                 mi.itemName AS "itemName",
                 mi.basePrice AS "basePrice",
                 mi.isAvailable AS "isAvailable",
+                  mi.restaurantID AS "restaurantID",
                 fi.portionSize AS "portionSize"
             FROM MenuItem mi
             JOIN FoodItem fi ON mi.itemID = fi.itemID
@@ -56,13 +58,13 @@ class FoodItem extends FoodItemDef {
         const result = await dbConnection_1.default.query(query, [itemID]);
         return result.rows[0] || null;
     }
-    static async add(itemName, basePrice, available, portionSize) {
+    static async add(itemName, basePrice, available, portionSize, restaurantID) {
         const client = await dbConnection_1.default.connect();
         try {
             await client.query("BEGIN");
-            const miRes = await client.query(`INSERT INTO MenuItem (itemName, basePrice, isAvailable)
-                 VALUES ($1, $2, $3)
-                 RETURNING itemID AS "itemID"`, [itemName, basePrice, available]);
+            const miRes = await client.query(`INSERT INTO MenuItem (itemName, basePrice, isAvailable, restaurantID)
+                 VALUES ($1, $2, $3, $4)
+                 RETURNING itemID AS "itemID"`, [itemName, basePrice, available, restaurantID]);
             const itemID = miRes.rows[0].itemID;
             await client.query("INSERT INTO FoodItem (itemID, portionSize) VALUES ($1, $2)", [itemID, portionSize]);
             await client.query("COMMIT");
@@ -71,6 +73,7 @@ class FoodItem extends FoodItemDef {
                 itemName,
                 basePrice,
                 isAvailable: available,
+                restaurantID,
                 portionSize,
                 type: "food",
             };

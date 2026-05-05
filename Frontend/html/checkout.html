@@ -97,44 +97,20 @@
                 <span class="step-badge">3</span> Payment Method
               </div>
               <div class="payment-options">
-                <div class="payment-option selected" data-method="cash">
+                <div class="payment-option selected" data-method="Cash">
                   <div class="pay-icon">💵</div>
-                  <div class="pay-label">Cash on Delivery</div>
+                  <div class="pay-label">Cash</div>
                   <div class="pay-sub">Pay when it arrives</div>
                 </div>
-                <div class="payment-option" data-method="card">
-                  <div class="pay-icon">💳</div>
-                  <div class="pay-label">Credit / Debit</div>
-                  <div class="pay-sub">Visa, Mastercard</div>
-                </div>
-                <div class="payment-option" data-method="online">
+                <div class="payment-option" data-method="Digital Wallet">
                   <div class="pay-icon">📱</div>
-                  <div class="pay-label">Online Transfer</div>
-                  <div class="pay-sub">Bank transfer</div>
+                  <div class="pay-label">Digital Wallet</div>
+                  <div class="pay-sub">Bank transfer or mobile money</div>
                 </div>
               </div>
 
-              <div id="card-details">
-                <div class="field-row">
-                  <div class="field" style="grid-column:1/-1;">
-                    <label for="card-number">Card Number</label>
-                    <input type="text" id="card-number" name="cardNumber" placeholder="1234 5678 9012 3456" maxlength="19"/>
-                  </div>
-                </div>
-                <div class="field-row" style="margin-top:.9rem;">
-                  <div class="field">
-                    <label for="card-expiry">Expiry Date</label>
-                    <input type="text" id="card-expiry" name="cardExpiry" placeholder="MM / YY" maxlength="7"/>
-                  </div>
-                  <div class="field">
-                    <label for="card-cvv">CVV</label>
-                    <input type="text" id="card-cvv" name="cardCvv" placeholder="•••" maxlength="3"/>
-                  </div>
-                </div>
-                <div class="field" style="margin-top:.9rem;">
-                  <label for="card-name">Name on Card</label>
-                  <input type="text" id="card-name" name="cardName" placeholder="Full name as on card"/>
-                </div>
+              <div id="wallet-notice" style="display:none;margin-top:1rem;padding:1rem;background:var(--accent-light);border-radius:0.5rem;color:var(--accent);font-size:0.9rem;">
+                <strong>📱 Transfer Ready:</strong> Please have your transfer ready for the driver.
               </div>
             </div>
 

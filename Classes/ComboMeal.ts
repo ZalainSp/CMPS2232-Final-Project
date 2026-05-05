@@ -44,6 +44,7 @@ export class ComboMeal extends ComboMealDef {
                 mi.itemName AS "itemName",
                 mi.basePrice AS "basePrice",
                 mi.isAvailable AS "isAvailable",
+                mi.restaurantID AS "restaurantID",
                 cm.discountAmount AS "discountAmount",
                 (mi.basePrice - cm.discountAmount) AS "finalPrice"
             FROM MenuItem mi
@@ -61,6 +62,7 @@ export class ComboMeal extends ComboMealDef {
                 mi.itemName AS "itemName",
                 mi.basePrice AS "basePrice",
                 mi.isAvailable AS "isAvailable",
+                  mi.restaurantID AS "restaurantID",
                 cm.discountAmount AS "discountAmount",
                 (mi.basePrice - cm.discountAmount) AS "finalPrice"
             FROM MenuItem mi
@@ -76,16 +78,17 @@ export class ComboMeal extends ComboMealDef {
     basePrice: number,
     available: boolean,
     discountAmount: number,
+    restaurantID: number,
   ) {
     const client = await db.connect();
     try {
       await client.query("BEGIN");
 
       const miRes = await client.query(
-        `INSERT INTO MenuItem (itemName, basePrice, isAvailable)
-                 VALUES ($1, $2, $3)
+        `INSERT INTO MenuItem (itemName, basePrice, isAvailable, restaurantID)
+                 VALUES ($1, $2, $3, $4)
                  RETURNING itemID AS "itemID"`,
-        [itemName, basePrice, available],
+        [itemName, basePrice, available, restaurantID],
       );
       const itemID = miRes.rows[0].itemID;
 
@@ -100,6 +103,7 @@ export class ComboMeal extends ComboMealDef {
         itemName,
         basePrice,
         isAvailable: available,
+        restaurantID,
         discountAmount,
         finalPrice: basePrice - discountAmount,
         type: "combo",

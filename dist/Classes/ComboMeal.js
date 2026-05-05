@@ -36,6 +36,7 @@ class ComboMeal extends ComboMealDef {
                 mi.itemName AS "itemName",
                 mi.basePrice AS "basePrice",
                 mi.isAvailable AS "isAvailable",
+                mi.restaurantID AS "restaurantID",
                 cm.discountAmount AS "discountAmount",
                 (mi.basePrice - cm.discountAmount) AS "finalPrice"
             FROM MenuItem mi
@@ -52,6 +53,7 @@ class ComboMeal extends ComboMealDef {
                 mi.itemName AS "itemName",
                 mi.basePrice AS "basePrice",
                 mi.isAvailable AS "isAvailable",
+                  mi.restaurantID AS "restaurantID",
                 cm.discountAmount AS "discountAmount",
                 (mi.basePrice - cm.discountAmount) AS "finalPrice"
             FROM MenuItem mi
@@ -61,13 +63,13 @@ class ComboMeal extends ComboMealDef {
         const result = await dbConnection_1.default.query(query, [itemID]);
         return result.rows[0] || null;
     }
-    static async add(itemName, basePrice, available, discountAmount) {
+    static async add(itemName, basePrice, available, discountAmount, restaurantID) {
         const client = await dbConnection_1.default.connect();
         try {
             await client.query("BEGIN");
-            const miRes = await client.query(`INSERT INTO MenuItem (itemName, basePrice, isAvailable)
-                 VALUES ($1, $2, $3)
-                 RETURNING itemID AS "itemID"`, [itemName, basePrice, available]);
+            const miRes = await client.query(`INSERT INTO MenuItem (itemName, basePrice, isAvailable, restaurantID)
+                 VALUES ($1, $2, $3, $4)
+                 RETURNING itemID AS "itemID"`, [itemName, basePrice, available, restaurantID]);
             const itemID = miRes.rows[0].itemID;
             await client.query("INSERT INTO ComboMeal (itemID, discountAmount) VALUES ($1, $2)", [itemID, discountAmount]);
             await client.query("COMMIT");
@@ -76,6 +78,7 @@ class ComboMeal extends ComboMealDef {
                 itemName,
                 basePrice,
                 isAvailable: available,
+                restaurantID,
                 discountAmount,
                 finalPrice: basePrice - discountAmount,
                 type: "combo",

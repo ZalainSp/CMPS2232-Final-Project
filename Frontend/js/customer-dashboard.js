@@ -65,7 +65,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (!Array.isArray(orders) || orders.length === 0) {
             ordersTableBody.innerHTML = `
                 <tr>
-                    <td colspan="4" style="color:var(--gray);padding:1rem 1.2rem;">No orders yet.</td>
+                    <td colspan="5" style="color:var(--gray);padding:1rem 1.2rem;">No orders yet.</td>
                 </tr>
             `;
             return;
@@ -77,6 +77,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 return `
                     <tr>
                         <td>#${order.orderID ?? "—"}</td>
+                        <td>${order.restaurantID ?? "—"}</td>
                         <td>${placedAt}</td>
                         <td>${order.deliveryType || "—"}</td>
                         <td>${order.status || "—"}</td>

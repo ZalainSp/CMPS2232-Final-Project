@@ -37,13 +37,15 @@ class MenuItem extends MenuItemDef {
     toggleAvailability() {
         this.available = !this.available;
     }
-    static async getAll() {
-        const query = `
+    static async getAll(restaurantID = null) {
+        const query = restaurantID == null
+            ? `
             SELECT
                 mi.itemID AS "itemID",
                 mi.itemName AS "itemName",
                 mi.basePrice AS "basePrice",
                 mi.isAvailable AS "isAvailable",
+                mi.restaurantID AS "restaurantID",
                 CASE
                     WHEN fi.itemID IS NOT NULL THEN 'food'
                     WHEN di.itemID IS NOT NULL THEN 'drink'
@@ -58,8 +60,31 @@ class MenuItem extends MenuItemDef {
             LEFT JOIN DrinkItem di ON mi.itemID = di.itemID
             LEFT JOIN ComboMeal cm ON mi.itemID = cm.itemID
             ORDER BY mi.itemName ASC;
-        `;
-        const result = await dbConnection_1.default.query(query);
+          `
+            : `
+            SELECT
+              mi.itemID AS "itemID",
+              mi.itemName AS "itemName",
+              mi.basePrice AS "basePrice",
+              mi.isAvailable AS "isAvailable",
+              mi.restaurantID AS "restaurantID",
+              CASE
+                WHEN fi.itemID IS NOT NULL THEN 'food'
+                WHEN di.itemID IS NOT NULL THEN 'drink'
+                WHEN cm.itemID IS NOT NULL THEN 'combo'
+                ELSE 'item'
+              END AS type,
+              fi.portionSize AS "portionSize",
+              di.cupSize AS "cupSize",
+              cm.discountAmount AS "discountAmount"
+            FROM MenuItem mi
+            LEFT JOIN FoodItem fi ON mi.itemID = fi.itemID
+            LEFT JOIN DrinkItem di ON mi.itemID = di.itemID
+            LEFT JOIN ComboMeal cm ON mi.itemID = cm.itemID
+            WHERE mi.restaurantID = $1
+            ORDER BY mi.itemName ASC;
+          `;
+        const result = restaurantID == null ? await dbConnection_1.default.query(query) : await dbConnection_1.default.query(query, [restaurantID]);
         return result.rows;
     }
     static async getById(itemID) {
@@ -69,6 +94,7 @@ class MenuItem extends MenuItemDef {
                 mi.itemName AS "itemName",
                 mi.basePrice AS "basePrice",
                 mi.isAvailable AS "isAvailable",
+                mi.restaurantID AS "restaurantID",
                 CASE
                     WHEN fi.itemID IS NOT NULL THEN 'food'
                     WHEN di.itemID IS NOT NULL THEN 'drink'

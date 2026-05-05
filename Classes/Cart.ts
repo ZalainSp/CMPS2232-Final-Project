@@ -45,6 +45,7 @@ export class Cart extends CartDef {
             SELECT
                 ci.itemID AS "itemID",
                 ci.quantity AS "quantity",
+                mi.restaurantID AS "restaurantID",
                 mi.itemName AS "itemName",
                 mi.basePrice AS "basePrice",
                 mi.isAvailable AS "isAvailable",

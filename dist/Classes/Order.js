@@ -14,13 +14,14 @@ class OrdersDef {
 }
 exports.OrdersDef = OrdersDef;
 class Orders extends OrdersDef {
-    constructor(orderID, orderDate, deliveryType, status, userID, driverID = null) {
+    constructor(orderID, orderDate, deliveryType, status, userID, driverID = null, restaurantID = null) {
         super();
         this.orderID = orderID;
         this.orderDate = orderDate;
         this.deliveryType = deliveryType;
         this.status = status;
         this.userID = userID;
+        this.restaurantID = restaurantID;
         this.driverID = driverID;
     }
     getOrderID() {
@@ -38,6 +39,9 @@ class Orders extends OrdersDef {
     getUserID() {
         return this.userID;
     }
+    getRestaurantID() {
+        return this.restaurantID;
+    }
     getDriverID() {
         return this.driverID;
     }
@@ -47,22 +51,40 @@ class Orders extends OrdersDef {
     setDriverID(driverID) {
         this.driverID = driverID;
     }
-    static async getAll() {
-        const query = `
+    static async getAll(restaurantID = null) {
+        const query = restaurantID == null
+            ? `
             SELECT
                 o.orderID AS "orderID",
                 o.orderDate AS "orderDate",
                 o.deliveryType AS "deliveryType",
                 o.status AS "status",
                 o.customerID AS "customerID",
+                o.restaurantID AS "restaurantID",
                 o.driverID AS "driverID",
                 u.username AS "customerName"
             FROM Orders o
             LEFT JOIN Customer c ON o.customerID = c.userID
             LEFT JOIN Users u ON c.userID = u.userID
             ORDER BY o.orderDate DESC;
+        `
+            : `
+            SELECT
+                o.orderID AS "orderID",
+                o.orderDate AS "orderDate",
+                o.deliveryType AS "deliveryType",
+                o.status AS "status",
+                o.customerID AS "customerID",
+                o.restaurantID AS "restaurantID",
+                o.driverID AS "driverID",
+                u.username AS "customerName"
+            FROM Orders o
+            LEFT JOIN Customer c ON o.customerID = c.userID
+            LEFT JOIN Users u ON c.userID = u.userID
+              WHERE o.restaurantID = $1
+            ORDER BY o.orderDate DESC;
         `;
-        const result = await dbConnection_1.default.query(query);
+        const result = restaurantID == null ? await dbConnection_1.default.query(query) : await dbConnection_1.default.query(query, [restaurantID]);
         return result.rows;
     }
     static async getById(orderID) {
@@ -73,6 +95,7 @@ class Orders extends OrdersDef {
                 o.deliveryType AS "deliveryType",
                 o.status AS "status",
                 o.customerID AS "customerID",
+                o.restaurantID AS "restaurantID",
                 o.driverID AS "driverID",
                 u.username AS "customerName",
                 c.deliveryAddress AS "deliveryAddress"
@@ -91,6 +114,7 @@ class Orders extends OrdersDef {
                 o.orderDate AS "orderDate",
                 o.deliveryType AS "deliveryType",
                 o.status AS "status",
+                o.restaurantID AS "restaurantID",
                 o.driverID AS "driverID"
             FROM Orders o
             WHERE o.customerID = $1
@@ -104,6 +128,7 @@ class Orders extends OrdersDef {
             SELECT
                 oi.itemID AS "itemID",
                 oi.quantity AS "quantity",
+              mi.restaurantID AS "restaurantID",
                 mi.itemName AS "itemName",
                 mi.basePrice AS "basePrice",
                 CASE
@@ -140,8 +165,26 @@ class Orders extends OrdersDef {
                 await client.query("ROLLBACK");
                 return { success: false, message: "Cart is empty" };
             }
-            //calculate subtotal
-            const subtotal = await Cart_1.Cart.calculateSubtotal(userID);
+            const itemsByRestaurant = new Map();
+            for (const item of cartItems) {
+                const restaurantID = Number(item.restaurantID);
+                if (Number.isNaN(restaurantID) || restaurantID <= 0) {
+                    await client.query("ROLLBACK");
+                    return { success: false, message: "Cart items are missing restaurant assignments" };
+                }
+                const bucket = itemsByRestaurant.get(restaurantID) || [];
+                bucket.push(item);
+                itemsByRestaurant.set(restaurantID, bucket);
+            }
+            if (itemsByRestaurant.size === 0) {
+                await client.query("ROLLBACK");
+                return { success: false, message: "Cart items are missing restaurant assignments" };
+            }
+            const orderGroups = Array.from(itemsByRestaurant.entries()).map(([restaurantID, items]) => {
+                const subtotal = items.reduce((sum, item) => sum + Number(item.lineTotal || 0), 0);
+                return { restaurantID, items, subtotal };
+            });
+            const subtotal = orderGroups.reduce((sum, group) => sum + group.subtotal, 0);
             //validate promo
             let discount = 0;
             if (promoCode) {
@@ -154,33 +197,56 @@ class Orders extends OrdersDef {
             const deliveryFee = deliveryType === "priority" ? PRIORITY_FEE : STANDARD_FEE;
             //tax on (subtotal - discount)
             const taxableAmount = subtotal - discount;
-            const tax = parseFloat((taxableAmount * TAX_RATE).toFixed(2));
-            const total = parseFloat((taxableAmount + tax + deliveryFee).toFixed(2));
-            //insert order
-            const orderRes = await client.query(`INSERT INTO Orders (deliveryType, status, customerID)
-                 VALUES ($1, 'Pending', $2)
-                 RETURNING orderID AS "orderID", orderDate AS "orderDate"`, [deliveryType, userID]);
-            const { orderID, orderDate } = orderRes.rows[0];
-            //insert order items from cart
-            for (const item of cartItems) {
-                await client.query("INSERT INTO OrderItem (orderID, itemID, quantity) VALUES ($1, $2, $3)", [orderID, item.itemID, item.quantity]);
+            const orderSummaries = [];
+            let discountRemaining = discount;
+            for (let index = 0; index < orderGroups.length; index++) {
+                const group = orderGroups[index];
+                const isLast = index === orderGroups.length - 1;
+                const groupDiscount = discount > 0
+                    ? (isLast
+                        ? discountRemaining
+                        : parseFloat(((discount * group.subtotal) / subtotal).toFixed(2)))
+                    : 0;
+                discountRemaining = parseFloat((discountRemaining - groupDiscount).toFixed(2));
+                const groupTaxable = group.subtotal - groupDiscount;
+                const groupTax = parseFloat((groupTaxable * TAX_RATE).toFixed(2));
+                const groupDeliveryFee = deliveryType === "priority" ? PRIORITY_FEE : STANDARD_FEE;
+                const groupTotal = parseFloat((groupTaxable + groupTax + groupDeliveryFee).toFixed(2));
+                const orderRes = await client.query(`INSERT INTO Orders (deliveryType, status, customerID, restaurantID)
+                   VALUES ($1, 'Pending', $2, $3)
+                   RETURNING orderID AS "orderID", orderDate AS "orderDate"`, [deliveryType, userID, group.restaurantID]);
+                const { orderID, orderDate } = orderRes.rows[0];
+                for (const item of group.items) {
+                    await client.query("INSERT INTO OrderItem (orderID, itemID, quantity) VALUES ($1, $2, $3)", [orderID, item.itemID, item.quantity]);
+                }
+                orderSummaries.push({
+                    orderID,
+                    orderDate,
+                    deliveryType,
+                    status: "Pending",
+                    customerID: userID,
+                    restaurantID: group.restaurantID,
+                    items: group.items,
+                    subtotal: group.subtotal,
+                    discount: groupDiscount,
+                    tax: groupTax,
+                    deliveryFee: groupDeliveryFee,
+                    total: groupTotal,
+                });
             }
             //clear cart
             await client.query("DELETE FROM CartItem WHERE userID = $1", [userID]);
             await client.query("COMMIT");
             return {
                 success: true,
-                order: {
-                    orderID,
-                    orderDate,
-                    deliveryType,
-                    status: "Pending",
-                    customerID: userID,
-                    subtotal,
-                    discount,
-                    tax,
-                    deliveryFee,
-                    total,
+                order: orderSummaries[0] || null,
+                orders: orderSummaries,
+                summary: {
+                    subtotal: orderSummaries.reduce((sum, order) => sum + Number(order.subtotal || 0), 0),
+                    discount: orderSummaries.reduce((sum, order) => sum + Number(order.discount || 0), 0),
+                    tax: orderSummaries.reduce((sum, order) => sum + Number(order.tax || 0), 0),
+                    deliveryFee: orderSummaries.reduce((sum, order) => sum + Number(order.deliveryFee || 0), 0),
+                    total: orderSummaries.reduce((sum, order) => sum + Number(order.total || 0), 0),
                 },
             };
         }
