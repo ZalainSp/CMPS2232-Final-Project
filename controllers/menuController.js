@@ -5,108 +5,160 @@ const { ComboMeal } = require("../dist/Classes/ComboMeal");
 const { RestaurantManager } = require("../dist/Classes/RestaurantManager");
 
 exports.getPublicMenu = async (req, res) => {
-    try {
-        const items = await MenuItem.getAll();
-        res.json({
-            success: true,
-            items: Array.isArray(items) ? items : []
-        });
-    } catch (e) {
-        res.status(500).json({
-            success: false,
-            message: e.message,
-            items: []
-        });
-    }
+  try {
+    const items = await MenuItem.getAll();
+    return res.json({
+      success: true,
+      items: Array.isArray(items) ? items : [],
+    });
+  } catch (e) {
+    return res
+      .status(500)
+      .json({ success: false, items: [], message: e.message });
+  }
 };
 
 exports.getMenu = async (req, res) => {
-    try {
-        const { userID: routeUserID } = req.params;
-        const manager = await RestaurantManager.getById(Number(routeUserID));
-        if (!manager) {
-            return res.status(404).json({ success: false, message: "Manager not found", items: [] });
-        }
+  const id = parseInt(req.params.userID);
+  if (isNaN(id))
+    return res
+      .status(400)
+      .json({ success: false, items: [], message: "Invalid ID." });
 
-        const restaurantID = manager.restaurantID || manager.restaurantid || null;
-        const items = await MenuItem.getAll(restaurantID);
-        res.json({
-            success: true,
-            items: Array.isArray(items) ? items : []
-        });
-    } catch (e) {
-        res.status(500).json({
-            success: false,
-            message: e.message,
-            items: []
-        });
-    }
+  try {
+    const items = await RestaurantManager.getMenu(id);
+    return res.json({
+      success: true,
+      items: Array.isArray(items) ? items : [],
+    });
+  } catch (e) {
+    return res
+      .status(500)
+      .json({ success: false, items: [], message: e.message });
+  }
 };
 
 exports.addManagerMenuItem = async (req, res) => {
-    const { userID: routeUserID } = req.params;
-    const sessionUser = req.user || {};
-    const role = sessionUser.role;
+  const routeUID = parseInt(req.params.userID);
+  const sessionUser = req.user || {};
 
-    if (role !== "Manager" && role !== "Admin") {
-        return res.status(403).json({ success: false, message: "Forbidden" });
-    }
+  if (sessionUser.role !== "Manager" && sessionUser.role !== "Admin") {
+    return res.status(403).json({ success: false, message: "Forbidden." });
+  }
+  if (sessionUser.role === "Manager" && sessionUser.userID !== routeUID) {
+    return res.status(403).json({
+      success: false,
+      message: "You can only add items to your own restaurant.",
+    });
+  }
 
-    if (role === "Manager" && String(sessionUser.userID) !== String(routeUserID)) {
-        return res.status(403).json({ success: false, message: "Forbidden" });
-    }
+  const {
+    itemName,
+    basePrice,
+    itemType,
+    portionSize,
+    cupSize,
+    discountAmount,
+    isAvailable,
+  } = req.body || {};
 
-    const {
-        itemName,
-        basePrice,
-        itemType,
-        portionSize,
-        cupSize,
-        discountAmount,
-        isAvailable
-    } = req.body || {};
+  if (!itemName || String(itemName).trim() === "") {
+    return res
+      .status(400)
+      .json({ success: false, message: "Item name is required." });
+  }
+  const price = parseFloat(basePrice);
+  if (isNaN(price) || price < 0) {
+    return res.status(400).json({
+      success: false,
+      message: "Base price must be a valid non-negative number.",
+    });
+  }
+  const normalizedType = String(itemType || "").toLowerCase();
+  if (!["food", "drink", "combo"].includes(normalizedType)) {
+    return res.status(400).json({
+      success: false,
+      message: "Item type must be 'food', 'drink', or 'combo'.",
+    });
+  }
 
-    if (!itemName || Number(basePrice) < 0 || !itemType) {
-        return res.status(400).json({
-            success: false,
-            message: "itemName, basePrice, and itemType are required"
-        });
-    }
-
-    const normalizedType = String(itemType).toLowerCase();
-    const available = isAvailable === false || String(isAvailable).toLowerCase() === "false" ? false : true;
-    const price = Number(basePrice);
-
-    const manager = await RestaurantManager.getById(Number(routeUserID));
-    if (!manager) {
-        return res.status(404).json({ success: false, message: "Manager not found" });
-    }
-
-    const restaurantID = manager.restaurantID || manager.restaurantid || null;
+  // Resolve the restaurantID for this manager
+  let restaurantID = null;
+  try {
+    const mgr = await RestaurantManager.getById(routeUID);
+    if (!mgr)
+      return res
+        .status(404)
+        .json({ success: false, message: "Manager not found." });
+    restaurantID = mgr.restaurantID ?? mgr.restaurantid ?? null;
     if (!restaurantID) {
-        return res.status(400).json({ success: false, message: "Restaurant record is missing" });
+      return res.status(400).json({
+        success: false,
+        message: "No restaurant is linked to this manager account yet.",
+      });
     }
+  } catch (e) {
+    return res.status(500).json({ success: false, message: e.message });
+  }
 
-    try {
-        let created = null;
+  const available =
+    isAvailable !== false && String(isAvailable).toLowerCase() !== "false";
 
-        if (normalizedType === "food") {
-            created = await FoodItem.add(itemName, price, available, portionSize || "medium", Number(restaurantID));
-        } else if (normalizedType === "drink") {
-            created = await DrinkItem.add(itemName, price, available, cupSize || "medium", Number(restaurantID));
-        } else if (normalizedType === "combo") {
-            created = await ComboMeal.add(itemName, price, available, Number(discountAmount) || 0, Number(restaurantID));
-        } else {
-            return res.status(400).json({ success: false, message: "Unsupported itemType" });
-        }
-
-        const fullItem = await MenuItem.getById(created.itemID);
-        return res.status(201).json({
-            success: true,
-            message: "Menu item created",
-            item: fullItem || created
+  try {
+    let created;
+    if (normalizedType === "food") {
+      if (!portionSize)
+        return res.status(400).json({
+          success: false,
+          message: "Portion size is required for food items.",
         });
-    } catch (e) {
-        return res.status(500).json({ success: false, message: e.message });
+      created = await FoodItem.add(
+        itemName.trim(),
+        price,
+        available,
+        portionSize,
+        Number(restaurantID),
+      );
+    } else if (normalizedType === "drink") {
+      if (!cupSize)
+        return res.status(400).json({
+          success: false,
+          message: "Cup size is required for drink items.",
+        });
+      created = await DrinkItem.add(
+        itemName.trim(),
+        price,
+        available,
+        cupSize,
+        Number(restaurantID),
+      );
+    } else {
+      const discount = parseFloat(discountAmount) || 0;
+      if (discount < 0)
+        return res
+          .status(400)
+          .json({ success: false, message: "Discount cannot be negative." });
+      if (discount > price)
+        return res.status(400).json({
+          success: false,
+          message: "Discount cannot exceed the base price.",
+        });
+      created = await ComboMeal.add(
+        itemName.trim(),
+        price,
+        available,
+        discount,
+        Number(restaurantID),
+      );
     }
+
+    const fullItem = await MenuItem.getById(created.itemID);
+    return res.status(201).json({
+      success: true,
+      message: "Menu item created.",
+      item: fullItem || created,
+    });
+  } catch (e) {
+    return res.status(500).json({ success: false, message: e.message });
+  }
 };

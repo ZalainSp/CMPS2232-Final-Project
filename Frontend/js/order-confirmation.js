@@ -1,72 +1,124 @@
 document.addEventListener("DOMContentLoaded", () => {
-    let order = null;
+  let orderData = null;
+  try {
+    orderData = JSON.parse(localStorage.getItem("lastOrder") || "null");
+  } catch {
+    orderData = null;
+  }
 
-    try {
-        order = JSON.parse(localStorage.getItem("lastOrder") || "null");
-    } catch {
-        order = null;
-    }
+  const fmt = (v) => `$${Number(v || 0).toFixed(2)}`;
 
-    const formatMoney = (value) => `$${Number(value).toFixed(2)}`;
+  const orderIdEl = document.getElementById("display-order-id");
+  const itemsEl = document.getElementById("confirm-items");
+  const addressEl = document.getElementById("confirm-address");
+  const deliveryTypeEl = document.getElementById("confirm-delivery-type");
+  const notesRowEl = document.getElementById("confirm-notes-row");
+  const notesEl = document.getElementById("confirm-notes");
+  const paymentEl = document.getElementById("confirm-payment");
+  const subtotalEl = document.getElementById("confirm-subtotal");
+  const discountRowEl = document.getElementById("confirm-discount-row");
+  const discountEl = document.getElementById("confirm-discount");
+  const taxEl = document.getElementById("confirm-tax");
+  const deliveryFeeEl = document.getElementById("confirm-delivery-fee");
+  const totalEl = document.getElementById("confirm-total");
+  const trackLinkTop = document.getElementById("track-link");
+  const trackLinkBot = document.getElementById("track-link-bottom");
 
-    const orderIdEl = document.getElementById("display-order-id");
-    const itemsEl = document.getElementById("confirm-items");
-    const addressEl = document.getElementById("confirm-address");
-    const deliveryTypeEl = document.getElementById("confirm-delivery-type");
-    const paymentEl = document.getElementById("confirm-payment");
-    const subtotalEl = document.getElementById("confirm-subtotal");
-    const taxEl = document.getElementById("confirm-tax");
-    const deliveryFeeEl = document.getElementById("confirm-delivery-fee");
-    const totalEl = document.getElementById("confirm-total");
+  if (!orderData) {
+    if (itemsEl)
+      itemsEl.innerHTML =
+        "<p>No recent order found. <a href='dashboard-customer.html'>Back to menu</a></p>";
+    return;
+  }
 
-    if (!order) {
-        if (itemsEl) itemsEl.innerHTML = "<p>No recent order found.</p>";
-        return;
-    }
+  const order = orderData.order || orderData;
+  const summary = orderData.summary || {};
+  const items = Array.isArray(order.items) ? order.items : [];
 
-    const orderGroups = Array.isArray(order.orders) && order.orders.length > 0
-        ? order.orders
-        : (order.order ? [order.order] : [order]);
+  if (orderIdEl) orderIdEl.textContent = `#${order.orderID ?? "—"}`;
 
-    const summary = order.summary || orderGroups.reduce((acc, group) => {
-        acc.subtotal += Number(group.subtotal || 0);
-        acc.discount += Number(group.discount || 0);
-        acc.tax += Number(group.tax || 0);
-        acc.deliveryFee += Number(group.deliveryFee || 0);
-        acc.total += Number(group.total || 0);
-        return acc;
-    }, { subtotal: 0, discount: 0, tax: 0, deliveryFee: 0, total: 0 });
+  const trackURL = order.orderID
+    ? `order-tracking.html?orderID=${order.orderID}`
+    : "order-tracking.html";
+  if (trackLinkTop) trackLinkTop.href = trackURL;
+  if (trackLinkBot) trackLinkBot.href = trackURL;
 
-    if (orderIdEl) {
-        const groupedOrderIds = orderGroups.map((group) => group.orderID).filter(Boolean).join(", ");
-        orderIdEl.textContent = groupedOrderIds || order.orderID || "—";
-    }
-    if (itemsEl) {
-        itemsEl.innerHTML = orderGroups
-            .map((group) => {
-                const items = Array.isArray(group.items) ? group.items : [];
-                const itemsHtml = items.length
-                    ? items.map((item) => `<div class="summary-item"><span>${item.itemName} x ${item.quantity}</span><span>${formatMoney(item.lineTotal ?? 0)}</span></div>`).join("")
-                    : "<p>No item details available.</p>";
-                return `
-                    <div class="confirm-card" style="margin-bottom:1rem;">
-                        <div class="card-heading">Restaurant ${group.restaurantID ?? "—"} Bill #${group.orderID ?? "—"}</div>
-                        ${itemsHtml}
-                        <div class="total-line"><span>Subtotal</span><span>${formatMoney(group.subtotal || 0)}</span></div>
-                        <div class="total-line"><span>GST (12.5%)</span><span>${formatMoney(group.tax || 0)}</span></div>
-                        <div class="total-line"><span>Delivery Fee</span><span>${formatMoney(group.deliveryFee || 0)}</span></div>
-                        <div class="total-line"><span>Restaurant Total</span><span>${formatMoney(group.total || 0)}</span></div>
+  if (itemsEl) {
+    if (!items.length) {
+      itemsEl.innerHTML =
+        "<p style='color:var(--gray);'>No item details available.</p>";
+    } else {
+      itemsEl.innerHTML = items
+        .map((item) => {
+          const isCombo = item.type === "combo";
+          const discount = Number(item.discountAmount || 0);
+          const unitPrice = isCombo
+            ? Math.max(0, Number(item.basePrice) - discount)
+            : Number(item.basePrice);
+          const lineTotal = Number(
+            item.lineTotal ?? unitPrice * Number(item.quantity),
+          );
+
+          let subText = "";
+          if (item.portionSize) subText = ` · ${item.portionSize}`;
+          else if (item.cupSize) subText = ` · ${item.cupSize}`;
+          else if (isCombo && discount > 0)
+            subText = ` · Save ${fmt(discount)}`;
+
+          return `
+                    <div class="summary-item" style="display:flex;justify-content:space-between;align-items:flex-start;padding:.4rem 0;border-bottom:1px solid var(--light);">
+                      <div>
+                        <div style="font-weight:500;">${item.itemName}${subText}</div>
+                        <div style="font-size:.82rem;color:var(--gray);">
+                          Qty ${item.quantity} × ${fmt(unitPrice)}
+                          ${isCombo ? '<span style="color:var(--orange);margin-left:.4rem;">Combo</span>' : ""}
+                        </div>
+                      </div>
+                      <div style="font-weight:600;">${fmt(lineTotal)}</div>
                     </div>
                 `;
-            })
-            .join("");
+        })
+        .join("");
     }
-    const firstOrder = orderGroups[0] || order;
-    if (addressEl) addressEl.textContent = firstOrder.deliveryAddress || order.deliveryAddress || "Saved delivery address";
-    if (deliveryTypeEl) deliveryTypeEl.textContent = firstOrder.deliveryType || order.deliveryType || "standard";
-    if (paymentEl) paymentEl.textContent = firstOrder.paymentMethod || order.paymentMethod || "Cash on Delivery";
-    if (subtotalEl) subtotalEl.textContent = formatMoney(summary.subtotal || 0);
-    if (taxEl) taxEl.textContent = formatMoney(summary.tax || 0);
-    if (deliveryFeeEl) deliveryFeeEl.textContent = formatMoney(summary.deliveryFee || 0);
-    if (totalEl) totalEl.textContent = formatMoney(summary.total || 0);
+  }
+
+  const deliveryAddress = order.deliveryAddress || "Saved delivery address";
+  const deliveryType = order.deliveryType || "standard";
+  const notes = order.deliveryNotes || "";
+  const payment = order.paymentMethod || "Cash";
+
+  if (addressEl) addressEl.textContent = deliveryAddress;
+  if (deliveryTypeEl)
+    deliveryTypeEl.textContent =
+      deliveryType.charAt(0).toUpperCase() + deliveryType.slice(1);
+  if (paymentEl) paymentEl.textContent = payment;
+
+  if (notesRowEl && notesEl) {
+    if (notes) {
+      notesRowEl.style.display = "flex";
+      notesEl.textContent = notes;
+    } else {
+      notesRowEl.style.display = "none";
+    }
+  }
+
+  const subtotal = Number(summary.subtotal ?? order.subtotal ?? 0);
+  const discount = Number(summary.discount ?? order.discount ?? 0);
+  const tax = Number(summary.tax ?? order.tax ?? 0);
+  const deliveryFee = Number(summary.deliveryFee ?? order.deliveryFee ?? 0);
+  const total = Number(summary.total ?? order.total ?? 0);
+
+  if (subtotalEl) subtotalEl.textContent = fmt(subtotal);
+  if (taxEl) taxEl.textContent = fmt(tax);
+  if (deliveryFeeEl) deliveryFeeEl.textContent = fmt(deliveryFee);
+  if (totalEl) totalEl.textContent = fmt(total);
+
+  if (discountRowEl && discountEl) {
+    if (discount > 0) {
+      discountRowEl.style.display = "flex";
+      discountEl.textContent = `-${fmt(discount)}`;
+    } else {
+      discountRowEl.style.display = "none";
+    }
+  }
 });

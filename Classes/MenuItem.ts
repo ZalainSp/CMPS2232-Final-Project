@@ -8,7 +8,6 @@ export abstract class MenuItemDef {
 
   abstract getPrice(): number;
   abstract getDescription(): string;
-
   abstract getItemID(): number;
   abstract getItemName(): string;
   abstract isAvailable(): boolean;
@@ -53,86 +52,70 @@ export class MenuItem extends MenuItemDef {
   }
 
   static async getAll(restaurantID: number | null = null) {
-    const query = restaurantID == null
-      ? `
-            SELECT
-                mi.itemID AS "itemID",
-                mi.itemName AS "itemName",
-                mi.basePrice AS "basePrice",
-                mi.isAvailable AS "isAvailable",
-                mi.restaurantID AS "restaurantID",
-                CASE
-                    WHEN fi.itemID IS NOT NULL THEN 'food'
-                    WHEN di.itemID IS NOT NULL THEN 'drink'
-                    WHEN cm.itemID IS NOT NULL THEN 'combo'
-                    ELSE 'item'
-                END AS type,
-                fi.portionSize AS "portionSize",
-                di.cupSize AS "cupSize",
-                cm.discountAmount AS "discountAmount"
-            FROM MenuItem mi
-            LEFT JOIN FoodItem fi ON mi.itemID = fi.itemID
-            LEFT JOIN DrinkItem di ON mi.itemID = di.itemID
-            LEFT JOIN ComboMeal cm ON mi.itemID = cm.itemID
-            ORDER BY mi.itemName ASC;
-          `
-          : `
-            SELECT
-              mi.itemID AS "itemID",
-              mi.itemName AS "itemName",
-              mi.basePrice AS "basePrice",
-              mi.isAvailable AS "isAvailable",
-              mi.restaurantID AS "restaurantID",
-              CASE
-                WHEN fi.itemID IS NOT NULL THEN 'food'
-                WHEN di.itemID IS NOT NULL THEN 'drink'
-                WHEN cm.itemID IS NOT NULL THEN 'combo'
-                ELSE 'item'
-              END AS type,
-              fi.portionSize AS "portionSize",
-              di.cupSize AS "cupSize",
-              cm.discountAmount AS "discountAmount"
-            FROM MenuItem mi
-            LEFT JOIN FoodItem fi ON mi.itemID = fi.itemID
-            LEFT JOIN DrinkItem di ON mi.itemID = di.itemID
-            LEFT JOIN ComboMeal cm ON mi.itemID = cm.itemID
-            WHERE mi.restaurantID = $1
-            ORDER BY mi.itemName ASC;
-          `;
-        const result = restaurantID == null ? await db.query(query) : await db.query(query, [restaurantID]);
+    const baseSelect = `
+      SELECT
+        mi.itemID        AS "itemID",
+        mi.itemName      AS "itemName",
+        mi.basePrice     AS "basePrice",
+        mi.isAvailable   AS "isAvailable",
+        mi.restaurantID  AS "restaurantID",
+        CASE
+          WHEN fi.itemID IS NOT NULL THEN 'food'
+          WHEN di.itemID IS NOT NULL THEN 'drink'
+          WHEN cm.itemID IS NOT NULL THEN 'combo'
+          ELSE 'item'
+        END AS type,
+        fi.portionSize    AS "portionSize",
+        di.cupSize        AS "cupSize",
+        cm.discountAmount AS "discountAmount"
+      FROM MenuItem mi
+      LEFT JOIN FoodItem  fi ON mi.itemID = fi.itemID
+      LEFT JOIN DrinkItem di ON mi.itemID = di.itemID
+      LEFT JOIN ComboMeal cm ON mi.itemID = cm.itemID
+    `;
+
+    if (restaurantID === null) {
+      const result = await db.query(baseSelect + " ORDER BY mi.itemName ASC;");
+      return result.rows;
+    }
+    const result = await db.query(
+      baseSelect + " WHERE mi.restaurantID = $1 ORDER BY mi.itemName ASC;",
+      [restaurantID],
+    );
     return result.rows;
   }
 
   static async getById(itemID: number) {
     const query = `
-            SELECT
-                mi.itemID AS "itemID",
-                mi.itemName AS "itemName",
-                mi.basePrice AS "basePrice",
-                mi.isAvailable AS "isAvailable",
-                mi.restaurantID AS "restaurantID",
-                CASE
-                    WHEN fi.itemID IS NOT NULL THEN 'food'
-                    WHEN di.itemID IS NOT NULL THEN 'drink'
-                    WHEN cm.itemID IS NOT NULL THEN 'combo'
-                    ELSE 'item'
-                END AS type,
-                fi.portionSize AS "portionSize",
-                di.cupSize AS "cupSize",
-                cm.discountAmount AS "discountAmount"
-            FROM MenuItem mi
-            LEFT JOIN FoodItem fi ON mi.itemID = fi.itemID
-            LEFT JOIN DrinkItem di ON mi.itemID = di.itemID
-            LEFT JOIN ComboMeal cm ON mi.itemID = cm.itemID
-            WHERE mi.itemID = $1;
-        `;
+      SELECT
+        mi.itemID        AS "itemID",
+        mi.itemName      AS "itemName",
+        mi.basePrice     AS "basePrice",
+        mi.isAvailable   AS "isAvailable",
+        mi.restaurantID  AS "restaurantID",
+        CASE
+          WHEN fi.itemID IS NOT NULL THEN 'food'
+          WHEN di.itemID IS NOT NULL THEN 'drink'
+          WHEN cm.itemID IS NOT NULL THEN 'combo'
+          ELSE 'item'
+        END AS type,
+        fi.portionSize    AS "portionSize",
+        di.cupSize        AS "cupSize",
+        cm.discountAmount AS "discountAmount"
+      FROM MenuItem mi
+      LEFT JOIN FoodItem  fi ON mi.itemID = fi.itemID
+      LEFT JOIN DrinkItem di ON mi.itemID = di.itemID
+      LEFT JOIN ComboMeal cm ON mi.itemID = cm.itemID
+      WHERE mi.itemID = $1;
+    `;
     const result = await db.query(query, [itemID]);
     return result.rows[0] || null;
   }
 
   static async updatePrice(itemID: number, basePrice: number) {
     const result = await db.query(
-      'UPDATE MenuItem SET basePrice = $1 WHERE itemID = $2 RETURNING itemID, basePrice AS "basePrice"',
+      `UPDATE MenuItem SET basePrice = $1 WHERE itemID = $2
+       RETURNING itemID, basePrice AS "basePrice"`,
       [basePrice, itemID],
     );
     return result.rows[0];
@@ -140,10 +123,8 @@ export class MenuItem extends MenuItemDef {
 
   static async toggleAvailability(itemID: number) {
     const result = await db.query(
-      `UPDATE MenuItem
-             SET isAvailable = NOT isAvailable
-             WHERE itemID = $1
-             RETURNING itemID, isAvailable AS "isAvailable"`,
+      `UPDATE MenuItem SET isAvailable = NOT isAvailable WHERE itemID = $1
+       RETURNING itemID, isAvailable AS "isAvailable"`,
       [itemID],
     );
     return result.rows[0];

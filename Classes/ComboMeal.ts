@@ -3,7 +3,6 @@ import { MenuItem } from "./MenuItem";
 
 export abstract class ComboMealDef extends MenuItem {
   protected discountAmount!: number;
-
   abstract getDiscountAmount(): number;
   abstract setDiscountAmount(amount: number): void;
   abstract calculateSavings(): number;
@@ -39,36 +38,34 @@ export class ComboMeal extends ComboMealDef {
 
   static async getAll() {
     const query = `
-            SELECT
-                mi.itemID AS "itemID",
-                mi.itemName AS "itemName",
-                mi.basePrice AS "basePrice",
-                mi.isAvailable AS "isAvailable",
-                mi.restaurantID AS "restaurantID",
-                cm.discountAmount AS "discountAmount",
-                (mi.basePrice - cm.discountAmount) AS "finalPrice"
-            FROM MenuItem mi
-            JOIN ComboMeal cm ON mi.itemID = cm.itemID
-            ORDER BY mi.itemName ASC;
-        `;
+      SELECT mi.itemID        AS "itemID",
+             mi.itemName      AS "itemName",
+             mi.basePrice     AS "basePrice",
+             mi.isAvailable   AS "isAvailable",
+             mi.restaurantID  AS "restaurantID",
+             cm.discountAmount AS "discountAmount",
+             GREATEST(0, mi.basePrice - cm.discountAmount) AS "finalPrice"
+      FROM MenuItem mi
+      JOIN ComboMeal cm ON mi.itemID = cm.itemID
+      ORDER BY mi.itemName ASC;
+    `;
     const result = await db.query(query);
     return result.rows;
   }
 
   static async getById(itemID: number) {
     const query = `
-            SELECT
-                mi.itemID AS "itemID",
-                mi.itemName AS "itemName",
-                mi.basePrice AS "basePrice",
-                mi.isAvailable AS "isAvailable",
-                  mi.restaurantID AS "restaurantID",
-                cm.discountAmount AS "discountAmount",
-                (mi.basePrice - cm.discountAmount) AS "finalPrice"
-            FROM MenuItem mi
-            JOIN ComboMeal cm ON mi.itemID = cm.itemID
-            WHERE mi.itemID = $1;
-        `;
+      SELECT mi.itemID        AS "itemID",
+             mi.itemName      AS "itemName",
+             mi.basePrice     AS "basePrice",
+             mi.isAvailable   AS "isAvailable",
+             mi.restaurantID  AS "restaurantID",
+             cm.discountAmount AS "discountAmount",
+             GREATEST(0, mi.basePrice - cm.discountAmount) AS "finalPrice"
+      FROM MenuItem mi
+      JOIN ComboMeal cm ON mi.itemID = cm.itemID
+      WHERE mi.itemID = $1;
+    `;
     const result = await db.query(query, [itemID]);
     return result.rows[0] || null;
   }
@@ -86,8 +83,7 @@ export class ComboMeal extends ComboMealDef {
 
       const miRes = await client.query(
         `INSERT INTO MenuItem (itemName, basePrice, isAvailable, restaurantID)
-                 VALUES ($1, $2, $3, $4)
-                 RETURNING itemID AS "itemID"`,
+         VALUES ($1, $2, $3, $4) RETURNING itemID AS "itemID"`,
         [itemName, basePrice, available, restaurantID],
       );
       const itemID = miRes.rows[0].itemID;
@@ -105,7 +101,7 @@ export class ComboMeal extends ComboMealDef {
         isAvailable: available,
         restaurantID,
         discountAmount,
-        finalPrice: basePrice - discountAmount,
+        finalPrice: Math.max(0, basePrice - discountAmount),
         type: "combo",
       };
     } catch (error) {
@@ -119,7 +115,7 @@ export class ComboMeal extends ComboMealDef {
   static async updateDiscount(itemID: number, discountAmount: number) {
     const result = await db.query(
       `UPDATE ComboMeal SET discountAmount = $1 WHERE itemID = $2
-             RETURNING itemID, discountAmount AS "discountAmount"`,
+       RETURNING itemID AS "itemID", discountAmount AS "discountAmount"`,
       [discountAmount, itemID],
     );
     return result.rows[0];

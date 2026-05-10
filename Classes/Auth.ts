@@ -12,7 +12,6 @@ export interface RegisterData {
   role: "Customer" | "Manager" | "Driver" | "Admin";
 
   deliveryAddress?: string;
-  restaurantID?: number;
   restaurantName?: string;
   openingHours?: string;
   driverID?: number;
@@ -29,13 +28,16 @@ export interface AuthResult {
     email: string;
     contactNumber?: string;
     role: string;
+    restaurantID?: number;
+    restaurantName?: string;
+    openingHours?: string;
+    vehicleType?: string;
+    available?: boolean;
+    deliveryAddress?: string;
   };
 }
 
 export class Auth extends AuthDef {
-  // =========================
-  // FIXED LOGIN (MAIN CHANGE)
-  // =========================
   static async login(
     username: string,
     password: string,
@@ -43,26 +45,27 @@ export class Auth extends AuthDef {
   ): Promise<AuthResult> {
     try {
       const usersRes = await db.query(
-        'SELECT userID AS "userID", username AS "username", email AS "email", contactNumber AS "contactNumber", passwordHash AS "passwordHash", passwordSalt AS "passwordSalt" FROM Users WHERE username = $1',
+        `SELECT userID AS "userID", username AS "username", email AS "email",
+                contactNumber AS "contactNumber",
+                passwordHash AS "passwordHash", passwordSalt AS "passwordSalt"
+         FROM Users WHERE username = $1`,
         [username],
       );
 
       if (usersRes.rowCount === 0) {
-        return { success: false, message: "Invalid username or password" };
+        return { success: false, message: "Invalid username or password." };
       }
 
       const user = usersRes.rows[0];
-
       const hashed = Auth.hashPassword(password, user.passwordSalt);
 
       if (hashed !== user.passwordHash) {
-        return { success: false, message: "Invalid username or password" };
+        return { success: false, message: "Invalid username or password." };
       }
 
-      // Check if the user is associated with the selected role
       const roleTable = Auth.getRoleTable(role);
       if (!roleTable) {
-        return { success: false, message: "Invalid role selected" };
+        return { success: false, message: "Invalid role selected." };
       }
 
       const roleRes = await db.query(
@@ -73,11 +76,30 @@ export class Auth extends AuthDef {
       if (roleRes.rowCount === 0) {
         return {
           success: false,
-          message: `No ${role} account found for this user`,
+          message: `No ${role} account found for this user.`,
         };
       }
 
+      const roleRow = roleRes.rows[0];
       const token = await Auth.createSession(user.userID, role);
+
+      // Attach role-specific fields the frontend dashboards depend on
+      const extra: Record<string, any> = {};
+      if (role === "Manager") {
+        extra.restaurantID =
+          roleRow.restaurantid ?? roleRow.restaurantID ?? null;
+        extra.restaurantName =
+          roleRow.restaurantname ?? roleRow.restaurantName ?? null;
+        extra.openingHours =
+          roleRow.openinghours ?? roleRow.openingHours ?? null;
+      } else if (role === "Driver") {
+        extra.vehicleType = roleRow.vehicletype ?? roleRow.vehicleType ?? null;
+        extra.available = roleRow.available ?? false;
+      } else if (role === "Customer") {
+        extra.deliveryAddress =
+          roleRow.deliveryaddress ?? roleRow.deliveryAddress ?? null;
+      }
+
       return {
         success: true,
         message: "Login successful",
@@ -88,6 +110,7 @@ export class Auth extends AuthDef {
           email: user.email,
           contactNumber: user.contactNumber,
           role,
+          ...extra,
         },
       };
     } catch (err: any) {
@@ -95,29 +118,16 @@ export class Auth extends AuthDef {
     }
   }
 
-  // =========================
-  // REGISTER (UNCHANGED CORE)
-  // =========================
   static async register(data: RegisterData): Promise<AuthResult> {
     const { username, email, contactNumber, password, confirmPassword, role } =
       data;
 
     if (password !== confirmPassword) {
-      return { success: false, message: "Passwords do not match" };
-    }
-
-    if (role === "Manager") {
-      if (!data.restaurantName || !data.openingHours) {
-        return {
-          success: false,
-          message: "Manager registration requires restaurant name and opening hours",
-        };
-      }
+      return { success: false, message: "Passwords do not match." };
     }
 
     const salt = Auth.generateSalt();
     const hash = Auth.hashPassword(password, salt);
-
     const client = await db.connect();
 
     try {
@@ -128,13 +138,17 @@ export class Auth extends AuthDef {
         [username, email],
       );
 
-      if (existing.rowCount! > 0) {
+      if ((existing.rowCount ?? 0) > 0) {
         await client.query("ROLLBACK");
-        return { success: false, message: "User already exists" };
+        return {
+          success: false,
+          message: "Username or email is already in use.",
+        };
       }
 
       const userRes = await client.query(
-        'INSERT INTO Users (username, email, contactNumber, passwordHash, passwordSalt) VALUES ($1,$2,$3,$4,$5) RETURNING userID AS "userID"',
+        `INSERT INTO Users (username, email, contactNumber, passwordHash, passwordSalt)
+         VALUES ($1,$2,$3,$4,$5) RETURNING userID AS "userID"`,
         [username, email, contactNumber, hash, salt],
       );
 
@@ -142,17 +156,20 @@ export class Auth extends AuthDef {
 
       await Auth.insertRoleRecord(client, userID, role, data);
 
+      // Every customer gets a Cart row
       if (role === "Customer") {
-        await client.query("INSERT INTO Cart (userID) VALUES ($1) ON CONFLICT (userID) DO NOTHING", [userID]);
+        await client.query(
+          "INSERT INTO Cart (userID) VALUES ($1) ON CONFLICT (userID) DO NOTHING",
+          [userID],
+        );
       }
 
       await client.query("COMMIT");
 
       const token = await Auth.createSession(userID, role);
-
       return {
         success: true,
-        message: "Registered",
+        message: "Registration successful.",
         token,
         users: { userID, username, email, role },
       };
@@ -173,12 +190,10 @@ export class Auth extends AuthDef {
     role: string,
   ): Promise<string> {
     const token = crypto.randomBytes(32).toString("hex");
-
     await db.query(
       "INSERT INTO Session (token, userID, role, expiresAt) VALUES ($1,$2,$3, NOW() + INTERVAL '8 hours')",
       [token, userID, role],
     );
-
     return token;
   }
 
@@ -186,16 +201,12 @@ export class Auth extends AuthDef {
     token: string,
   ): Promise<{ userID: number; role: string } | null> {
     const res = await db.query(
-      'SELECT userID AS "userID", role AS "role" FROM Session WHERE token = $1 AND expiresAt > NOW()',
+      `SELECT userID AS "userID", role AS "role"
+       FROM Session WHERE token = $1 AND expiresAt > NOW()`,
       [token],
     );
-
     if (res.rowCount === 0) return null;
-
-    return {
-      userID: res.rows[0].userID,
-      role: res.rows[0].role,
-    };
+    return { userID: res.rows[0].userID, role: res.rows[0].role };
   }
 
   private static generateSalt() {
@@ -207,7 +218,7 @@ export class Auth extends AuthDef {
   }
 
   private static getRoleTable(role: string): string | null {
-    const map: any = {
+    const map: Record<string, string> = {
       Customer: "Customer",
       Manager: "RestaurantManager",
       Driver: "Driver",
@@ -226,11 +237,12 @@ export class Auth extends AuthDef {
       case "Customer":
         await client.query(
           "INSERT INTO Customer (userID, deliveryAddress, userStatus) VALUES ($1,$2,'Active')",
-          [userID, data.deliveryAddress],
+          [userID, data.deliveryAddress ?? ""],
         );
         break;
 
       case "Manager":
+        // restaurantID is GENERATED ALWAYS AS IDENTITY — never insert it explicitly
         await client.query(
           "INSERT INTO RestaurantManager (userID, restaurantName, openingHours) VALUES ($1,$2,$3)",
           [userID, data.restaurantName, data.openingHours],
@@ -239,8 +251,8 @@ export class Auth extends AuthDef {
 
       case "Driver":
         await client.query(
-          "INSERT INTO Driver (userID, driverID, vehicleType, available) VALUES ($1,$2,$3,true)",
-          [userID, data.driverID ?? null, data.vehicleType],
+          "INSERT INTO Driver (userID, vehicleType, available) VALUES ($1,$2,true)",
+          [userID, data.vehicleType],
         );
         break;
 

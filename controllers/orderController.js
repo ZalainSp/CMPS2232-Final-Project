@@ -2,155 +2,236 @@ const { Cart } = require("../dist/Classes/Cart");
 const { Orders } = require("../dist/Classes/Order");
 const { RestaurantManager } = require("../dist/Classes/RestaurantManager");
 
-const sameDay = (left, right) => {
-    const leftDate = new Date(left);
-    const rightDate = new Date(right);
-    return leftDate.toDateString() === rightDate.toDateString();
-};
-
-const calculateOrderTotal = (orderItems, deliveryType) => {
-    const subtotal = orderItems.reduce((sum, item) => sum + Number(item.lineTotal || 0), 0);
-    const tax = subtotal * 0.125;
-    const deliveryFee = deliveryType === "priority" ? 10 : 5;
-    return subtotal + tax + deliveryFee;
-};
-
 exports.placeCustomerOrder = async (req, res) => {
-    try {
-        if (!req.user || req.user.role !== "Customer") {
-            return res.status(403).json({ success: false, message: "Forbidden" });
-        }
+  if (!req.user || req.user.role !== "Customer") {
+    return res
+      .status(403)
+      .json({ success: false, message: "Only customers can place orders." });
+  }
 
-        const {
-            cartItems,
-            deliveryType = "standard",
-            promoCode = null,
-            deliveryAddress = null,
-            deliveryNotes = null,
-            paymentMethod = null
-        } = req.body || {};
+  const userID = req.user.userID;
+  const { deliveryType = "standard", promoCode = null } = req.body || {};
 
-        let currentCartItems = await Cart.getItems(req.user.userID);
+  const validTypes = ["standard", "priority"];
+  if (!validTypes.includes(String(deliveryType).toLowerCase())) {
+    return res
+      .status(400)
+      .json({
+        success: false,
+        message: "Delivery type must be 'standard' or 'priority'.",
+      });
+  }
 
-        if ((!currentCartItems || currentCartItems.length === 0) && Array.isArray(cartItems) && cartItems.length > 0) {
-            await Cart.clear(req.user.userID);
-
-            for (const item of cartItems) {
-                if (!item || !item.itemID) continue;
-
-                await Cart.addItem(req.user.userID, Number(item.itemID), Number(item.quantity) || 1);
-            }
-
-            currentCartItems = await Cart.getItems(req.user.userID);
-        }
-
-        const result = await Orders.placeOrders(req.user.userID, deliveryType, promoCode);
-
-        if (!result.success) {
-            return res.status(400).json(result);
-        }
-
-        if (Array.isArray(result.orders) && result.orders.length > 0) {
-            result.orders = result.orders.map((order) => ({
-                ...order,
-                deliveryAddress,
-                deliveryNotes,
-                paymentMethod,
-            }));
-            result.order = result.orders[0];
-        } else if (result.order) {
-            result.order.deliveryAddress = deliveryAddress;
-            result.order.deliveryNotes = deliveryNotes;
-            result.order.paymentMethod = paymentMethod;
-        }
-
-        return res.status(201).json(result);
-    } catch (e) {
-        res.status(500).json({ success: false, message: e.message });
+  try {
+    const empty = await Cart.isEmpty(userID);
+    if (empty) {
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "Your cart is empty. Add items before checking out.",
+        });
     }
+
+    const result = await Orders.placeOrders(
+      userID,
+      deliveryType.toLowerCase(),
+      promoCode || null,
+    );
+    if (!result.success) return res.status(400).json(result);
+
+    if (result.order) {
+      result.order.deliveryAddress = req.body.deliveryAddress || null;
+      result.order.deliveryNotes = req.body.deliveryNotes || null;
+      result.order.paymentMethod = req.body.paymentMethod || "Cash";
+    }
+
+    return res.status(201).json(result);
+  } catch (e) {
+    return res.status(500).json({ success: false, message: e.message });
+  }
 };
 
 exports.getOrdersHistory = async (req, res) => {
-    try {
-        const routeUserID = Number(req.params.userID);
+  const routeUID = parseInt(req.params.userID);
+  if (isNaN(routeUID))
+    return res
+      .status(400)
+      .json({ success: false, orders: [], message: "Invalid user ID." });
 
-        if (!req.user || (req.user.role !== "Admin" && Number(req.user.userID) !== routeUserID)) {
-            return res.status(403).json({ success: false, message: "Forbidden", orders: [] });
-        }
+  if (req.user.role !== "Admin" && req.user.userID !== routeUID) {
+    return res
+      .status(403)
+      .json({ success: false, orders: [], message: "Forbidden." });
+  }
 
-        const orders = await Orders.getByCustomer(routeUserID);
-        res.json({
-            success: true,
-            orders: Array.isArray(orders) ? orders : []
-        });
-    } catch (e) {
-        res.status(500).json({ success: false, message: e.message, orders: [] });
-    }
+  try {
+    const orders = await Orders.getByCustomer(routeUID);
+    return res.json({
+      success: true,
+      orders: Array.isArray(orders) ? orders : [],
+    });
+  } catch (e) {
+    return res
+      .status(500)
+      .json({ success: false, orders: [], message: e.message });
+  }
 };
 
-exports.trackOrderstatus = async (req, res) => ({ success: true });
+exports.trackOrderstatus = async (req, res) => {
+  const orderID = parseInt(req.params.orderID);
+  if (isNaN(orderID))
+    return res
+      .status(400)
+      .json({ success: false, message: "Invalid order ID." });
+
+  try {
+    const order = await Orders.getById(orderID);
+    if (!order)
+      return res
+        .status(404)
+        .json({ success: false, message: "Order not found." });
+    return res.json({
+      success: true,
+      orderID: order.orderID,
+      status: order.status,
+    });
+  } catch (e) {
+    return res.status(500).json({ success: false, message: e.message });
+  }
+};
 
 exports.getOrdersQueue = async (req, res) => {
-    try {
-        const routeUserID = Number(req.params.userID);
-        const sessionUser = req.user || {};
+  const id = parseInt(req.params.userID);
+  if (isNaN(id))
+    return res
+      .status(400)
+      .json({ success: false, orders: [], message: "Invalid ID." });
 
-        if (sessionUser.role !== "Admin" && (sessionUser.role !== "Manager" || Number(sessionUser.userID) !== routeUserID)) {
-            return res.status(403).json({ success: false, message: "Forbidden", orders: [], stats: {} });
-        }
+  const sessionUser = req.user || {};
+  if (
+    sessionUser.role !== "Admin" &&
+    (sessionUser.role !== "Manager" || sessionUser.userID !== id)
+  ) {
+    return res
+      .status(403)
+      .json({ success: false, orders: [], message: "Forbidden." });
+  }
 
-        const manager = await RestaurantManager.getById(routeUserID);
-        if (!manager) {
-            return res.status(404).json({ success: false, message: "Manager not found", orders: [], stats: {} });
-        }
+  try {
+    const queue = await RestaurantManager.getOrdersQueue(id);
+    const orders = Array.isArray(queue) ? queue : [];
 
-        const restaurantID = manager.restaurantID || manager.restaurantid || null;
-        if (!restaurantID) {
-            return res.status(400).json({ success: false, message: "Restaurant record is missing", orders: [], stats: {} });
-        }
+    const enriched = await Promise.all(
+      orders.map(async (order) => {
+        const items = await Orders.getItems(order.orderID);
+        return {
+          ...order,
+          items,
+          itemsSummary: Array.isArray(items)
+            ? items.map((i) => i.itemName).join(", ")
+            : "",
+        };
+      }),
+    );
 
-        const allOrders = sessionUser.role === "Admin" ? await Orders.getAll() : await Orders.getAll(Number(restaurantID));
-        const activeOrders = allOrders.filter((order) => !["Delivered", "Cancelled"].includes(order.status));
-        const today = new Date();
+    const today = new Date().toDateString();
+    const allOrders = await Orders.getAll();
+    const todayDone = allOrders.filter(
+      (o) =>
+        new Date(o.orderDate).toDateString() === today &&
+        o.status === "Delivered",
+    ).length;
 
-        const orders = await Promise.all(
-            activeOrders.map(async (order) => {
-                const items = await Orders.getItems(order.orderID);
-                return {
-                    ...order,
-                    items,
-                    itemsSummary: Array.isArray(items) ? items.map((item) => item.itemName).join(", ") : ""
-                };
-            })
-        );
+    const revenueToday = await RestaurantManager.getRevenueToday(id);
 
-        const todayOrders = await Promise.all(
-            allOrders
-                .filter((order) => sameDay(order.orderDate, today) && order.status !== "Cancelled")
-                .map(async (order) => ({
-                    ...order,
-                    items: await Orders.getItems(order.orderID)
-                }))
-        );
-
-        const completedToday = todayOrders.filter((order) => order.status === "Delivered").length;
-        const revenueToday = todayOrders.reduce(
-            (sum, order) => sum + calculateOrderTotal(order.items || [], order.deliveryType),
-            0
-        );
-
-        return res.json({
-            success: true,
-            orders,
-            stats: {
-                activeOrders: orders.length,
-                completedToday,
-                revenueToday: Number(revenueToday.toFixed(2))
-            }
-        });
-    } catch (e) {
-        return res.status(500).json({ success: false, message: e.message, orders: [], stats: {} });
-    }
+    return res.json({
+      success: true,
+      orders: enriched,
+      stats: {
+        activeOrders: enriched.length,
+        completedToday: todayDone,
+        revenueToday,
+      },
+    });
+  } catch (e) {
+    return res
+      .status(500)
+      .json({ success: false, orders: [], stats: {}, message: e.message });
+  }
 };
 
-exports.updateOrderstatus = async (req, res) => ({ success: true });
+exports.updateOrderstatus = async (req, res) => {
+  const orderID = parseInt(req.params.orderID);
+  const { status } = req.body || {};
+  if (isNaN(orderID))
+    return res
+      .status(400)
+      .json({ success: false, message: "Invalid order ID." });
+
+  const valid = ["Pending", "Preparing", "Ready", "Cancelled"];
+  if (!status || !valid.includes(status)) {
+    return res
+      .status(400)
+      .json({
+        success: false,
+        message: `Status must be one of: ${valid.join(", ")}.`,
+      });
+  }
+
+  try {
+    const updated = await Orders.updateStatus(orderID, status);
+    if (!updated)
+      return res
+        .status(404)
+        .json({ success: false, message: "Order not found." });
+    return res.json({
+      success: true,
+      message: `Order #${orderID} updated to "${status}".`,
+      order: updated,
+    });
+  } catch (e) {
+    return res.status(500).json({ success: false, message: e.message });
+  }
+};
+
+exports.updateDeliveryStatus = async (req, res) => {
+  const orderID = parseInt(req.params.orderID);
+  const { status } = req.body || {};
+  if (isNaN(orderID))
+    return res
+      .status(400)
+      .json({ success: false, message: "Invalid order ID." });
+
+  const valid = ["Out for Delivery", "Delivered", "Cancelled"];
+  if (!status || !valid.includes(status)) {
+    return res
+      .status(400)
+      .json({
+        success: false,
+        message: `Status must be one of: ${valid.join(", ")}.`,
+      });
+  }
+
+  const order = await Orders.getById(orderID).catch(() => null);
+  if (!order)
+    return res
+      .status(404)
+      .json({ success: false, message: "Order not found." });
+  if (req.user.role !== "Admin" && order.driverID !== req.user.userID) {
+    return res
+      .status(403)
+      .json({ success: false, message: "You are not assigned to this order." });
+  }
+
+  try {
+    const updated = await Orders.updateStatus(orderID, status);
+    return res.json({
+      success: true,
+      message: `Status updated to "${status}".`,
+      order: updated,
+    });
+  } catch (e) {
+    return res.status(500).json({ success: false, message: e.message });
+  }
+};

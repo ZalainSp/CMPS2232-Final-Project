@@ -9,10 +9,12 @@ const app = express();
 const log = (module, msg) => console.log(`[${module}] ${msg}`);
 
 /* ============== CORS CONFIG ============== */
-app.use(cors({
+app.use(
+  cors({
     origin: "http://127.0.0.1:5500",
-    credentials: true
-}));
+    credentials: true,
+  }),
+);
 
 log("APP", "CORS configured");
 
@@ -22,36 +24,36 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, "Frontend")));
 
 app.get("/login", (req, res) => {
-    res.redirect("/html/login.html");
+  res.redirect("/html/login.html");
 });
 
 app.get("/register", (req, res) => {
-    res.redirect("/html/register.html");
+  res.redirect("/html/register.html");
 });
 
 app.get("/order-confirmation", (req, res) => {
-    res.redirect("/html/order-confirmation.html");
+  res.redirect("/html/order-confirmation.html");
 });
 
 app.get("/checkout", (req, res) => {
-    res.redirect("/html/checkout.html");
+  res.redirect("/html/checkout.html");
 });
 
 /* ---------------- API ---------------- */
 app.use("/api", routes);
 app.use("/api", (req, res) => {
-    res.status(404).json({
-        success: false,
-        message: "API route not found"
-    });
+  res.status(404).json({
+    success: false,
+    message: "API route not found",
+  });
 });
 
 /* ---------------- HOME ---------------- */
 app.get("/", (req, res) => {
-    res.redirect("/html/login.html");
+  res.redirect("/html/login.html");
 });
 
 const PORT = 3000;
 app.listen(PORT, () => {
-    log("SERVER", `🚀 GoBites running at http://localhost:${PORT}`);
+  log("SERVER", `🚀 GoBites running at http://localhost:${PORT}`);
 });

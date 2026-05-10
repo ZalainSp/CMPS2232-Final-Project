@@ -3,7 +3,6 @@ import { MenuItem } from "./MenuItem";
 
 export abstract class FoodItemDef extends MenuItem {
   protected portionSize!: string;
-
   abstract getPortionSize(): string;
   abstract setPortionSize(size: string): void;
 }
@@ -35,34 +34,32 @@ export class FoodItem extends FoodItemDef {
 
   static async getAll() {
     const query = `
-            SELECT
-                mi.itemID AS "itemID",
-                mi.itemName AS "itemName",
-                mi.basePrice AS "basePrice",
-                mi.isAvailable AS "isAvailable",
-                  mi.restaurantID AS "restaurantID",
-                fi.portionSize AS "portionSize"
-            FROM MenuItem mi
-            JOIN FoodItem fi ON mi.itemID = fi.itemID
-            ORDER BY mi.itemName ASC;
-        `;
+      SELECT mi.itemID       AS "itemID",
+             mi.itemName     AS "itemName",
+             mi.basePrice    AS "basePrice",
+             mi.isAvailable  AS "isAvailable",
+             mi.restaurantID AS "restaurantID",
+             fi.portionSize  AS "portionSize"
+      FROM MenuItem mi
+      JOIN FoodItem fi ON mi.itemID = fi.itemID
+      ORDER BY mi.itemName ASC;
+    `;
     const result = await db.query(query);
     return result.rows;
   }
 
   static async getById(itemID: number) {
     const query = `
-            SELECT
-                mi.itemID AS "itemID",
-                mi.itemName AS "itemName",
-                mi.basePrice AS "basePrice",
-                mi.isAvailable AS "isAvailable",
-                  mi.restaurantID AS "restaurantID",
-                fi.portionSize AS "portionSize"
-            FROM MenuItem mi
-            JOIN FoodItem fi ON mi.itemID = fi.itemID
-            WHERE mi.itemID = $1;
-        `;
+      SELECT mi.itemID       AS "itemID",
+             mi.itemName     AS "itemName",
+             mi.basePrice    AS "basePrice",
+             mi.isAvailable  AS "isAvailable",
+             mi.restaurantID AS "restaurantID",
+             fi.portionSize  AS "portionSize"
+      FROM MenuItem mi
+      JOIN FoodItem fi ON mi.itemID = fi.itemID
+      WHERE mi.itemID = $1;
+    `;
     const result = await db.query(query, [itemID]);
     return result.rows[0] || null;
   }
@@ -80,8 +77,7 @@ export class FoodItem extends FoodItemDef {
 
       const miRes = await client.query(
         `INSERT INTO MenuItem (itemName, basePrice, isAvailable, restaurantID)
-                 VALUES ($1, $2, $3, $4)
-                 RETURNING itemID AS "itemID"`,
+         VALUES ($1, $2, $3, $4) RETURNING itemID AS "itemID"`,
         [itemName, basePrice, available, restaurantID],
       );
       const itemID = miRes.rows[0].itemID;
@@ -112,7 +108,7 @@ export class FoodItem extends FoodItemDef {
   static async updatePortionSize(itemID: number, portionSize: string) {
     const result = await db.query(
       `UPDATE FoodItem SET portionSize = $1 WHERE itemID = $2
-             RETURNING itemID, portionSize AS "portionSize"`,
+       RETURNING itemID, portionSize AS "portionSize"`,
       [portionSize, itemID],
     );
     return result.rows[0];
